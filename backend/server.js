@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import { sendMessage } from './functions/chat.js'
 
 dotenv.config()
 
@@ -15,6 +16,9 @@ app.use(express.json())
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
+
+// NEW: Claude API proxy endpoint
+app.post('/api/chat', sendMessage)
 
 // Placeholder routes (to be implemented in Phase 3+)
 app.post('/api/check-in', (req, res) => {
