@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import * as tf from '@tensorflow/tfjs'
 import * as poseDetection from '@tensorflow-models/pose-detection'
+import { useGestureDetection } from '../hooks/useGestureDetection'
 import './PoseDetector.css'
 
 export default function PoseDetector({ videoRef }) {
@@ -10,6 +11,7 @@ export default function PoseDetector({ videoRef }) {
   const [error, setError] = useState(null)
   const [poses, setPoses] = useState([])
   const detectionLoopRef = useRef(null)
+  const { lastGesture, detectGesture } = useGestureDetection()
 
   // Initialize pose detector
   useEffect(() => {
@@ -65,6 +67,9 @@ export default function PoseDetector({ videoRef }) {
           const detectedPoses = await poseDetector.estimatePoses(video)
           if (isSubscribed) {
             setPoses(detectedPoses)
+            if (detectedPoses.length > 0) {
+              detectGesture(detectedPoses[0].keypoints)
+            }
           }
         } catch (err) {
           console.error('Pose detection estimation error:', err)
@@ -106,10 +111,21 @@ export default function PoseDetector({ videoRef }) {
         const pose = poses[0]
         drawSkeleton(ctx, pose.keypoints)
       }
+
+      // Draw gesture indicator on canvas
+      if (lastGesture) {
+        ctx.fillStyle = '#10b981'
+        ctx.font = 'bold 16px sans-serif'
+        ctx.fillText(
+          `${lastGesture.gesture.toUpperCase()} ${lastGesture.side ? lastGesture.side.toUpperCase() : ''}`.trim(),
+          10,
+          30
+        )
+      }
     }
 
     draw()
-  }, [poses, videoRef])
+  }, [poses, videoRef, lastGesture])
 
   const drawSkeleton = (ctx, keypoints) => {
     // Keypoint pairs for skeleton lines
