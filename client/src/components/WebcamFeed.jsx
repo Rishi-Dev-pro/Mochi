@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import PoseDetector from './PoseDetector'
 import './WebcamFeed.css'
 
 export default function WebcamFeed() {
@@ -103,6 +104,8 @@ export default function WebcamFeed() {
       </div>
 
       {error && <div className="error-message">{error}</div>}
+
+      {status === 'active' && <PoseDetector videoRef={videoRef} />}
 
       <div className="button-group">
         {status === 'idle' || status === 'denied' || status === 'error' ? (
