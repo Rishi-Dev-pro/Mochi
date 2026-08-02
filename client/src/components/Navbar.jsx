@@ -9,6 +9,7 @@ export default function Navbar() {
         <ul className="nav-menu">
           <li><Link to="/" className="nav-link">Home</Link></li>
           <li><Link to="/chat" className="nav-link">Chat</Link></li>
+          <li><Link to="/emotion-history" className="nav-link">📊 History</Link></li>
           <li><Link to="/settings" className="nav-link">Settings</Link></li>
         </ul>
       </div>
