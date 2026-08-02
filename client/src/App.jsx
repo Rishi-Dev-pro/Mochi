@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { WebcamProvider } from './context/WebcamContext'
 import Navbar from './components/Navbar'
+import EmotionDisplay from './components/EmotionDisplay'
 import HomePage from './pages/HomePage'
 import ChatPage from './pages/ChatPage'
 import SettingsPage from './pages/SettingsPage'
@@ -11,6 +12,7 @@ export default function App() {
     <Router>
       <WebcamProvider>
         <Navbar />
+        <EmotionDisplay />
         <main className="main-content">
           <Routes>
             <Route path="/" element={<HomePage />} />

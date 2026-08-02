@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import MochiCharacter from '../components/MochiCharacter'
 import { useGestureDetection } from '../hooks/useGestureDetection'
 import { useEmotionStore } from '../store/useEmotionStore'
-import '../styles/emotion-display.css'
 
 export default function HomePage() {
   const { lastGesture } = useGestureDetection()
@@ -37,29 +36,6 @@ export default function HomePage() {
           <h1>Welcome to Mochi</h1>
           <p>Your persistent 3D AI companion.</p>
         </div>
-
-        {/* Emotion Display Badge */}
-        <div
-          className="emotion-badge"
-          style={{ borderColor: emotionStore.getEmotionColor() }}
-        >
-          <div className="emotion-emoji">{emotionStore.getEmotionEmoji()}</div>
-          <div className="emotion-info">
-            <p className="emotion-type">{emotionStore.currentEmotion.type}</p>
-            <div className="emotion-intensity">
-              <div className="intensity-bar">
-                <div
-                  className="intensity-fill"
-                  style={{
-                    width: `${emotionStore.currentEmotion.intensity}%`,
-                    backgroundColor: emotionStore.getEmotionColor()
-                  }}
-                />
-              </div>
-              <span>{emotionStore.currentEmotion.intensity}%</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {mochiReaction && (
@@ -69,12 +45,6 @@ export default function HomePage() {
             Detected: {lastGesture.gesture}
           </p>
         </div>
-      )}
-
-      {emotionStore.currentEmotion.context && (
-        <p className="emotion-context">
-          💭 {emotionStore.currentEmotion.context}
-        </p>
       )}
 
       <MochiCharacter />
