@@ -40,10 +40,9 @@ export function useGestureDetection() {
     const nodDetection = detectNod(keypoints, gestureHistoryRef.current, frameCountRef.current)
     const pointDetection = detectPoint(keypoints, gestureHistoryRef.current, frameCountRef.current)
 
-    // Build detection list (most confident first)
-    const detections = [waveDetection, nodDetection, pointDetection]
+    // Build detection list prioritizing active arm gestures over head gestures
+    const detections = [waveDetection, pointDetection, nodDetection]
       .filter(d => d !== null)
-      .sort((a, b) => b.confidence - a.confidence)
 
     // Add to history (keep last 10 frames)
     detectionHistoryRef.current.push(detections[0] || null)

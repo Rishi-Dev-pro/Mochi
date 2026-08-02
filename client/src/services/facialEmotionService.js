@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs'
-import * as faceapi from 'face-api.js'
+import * as faceapi from '@vladmandic/face-api'
 
 // ============ EMOTION DETECTION SERVICE ============
 
