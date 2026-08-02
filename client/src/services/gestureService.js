@@ -133,21 +133,37 @@ export function detectNod(keypoints, history, frameCount) {
   const nose = keypoints[KEYPOINTS.NOSE]
   const leftEye = keypoints[KEYPOINTS.LEFT_EYE]
   const rightEye = keypoints[KEYPOINTS.RIGHT_EYE]
+  const leftShoulder = keypoints[KEYPOINTS.LEFT_SHOULDER]
+  const rightShoulder = keypoints[KEYPOINTS.RIGHT_SHOULDER]
 
   if (!nose?.score || nose.score < MIN_KEYPOINT_CONFIDENCE) return null
   if (!leftEye?.score || !rightEye?.score) return null
 
   const prevNose = history.smoothedNose
-
   if (!prevNose) return null
+
+  // IMPORTANT: Both shoulders must be still (nod is head-only, not arm movement)
+  const leftShoulderVel = calculateVelocity(
+    keypoints[KEYPOINTS.LEFT_SHOULDER],
+    history.smoothedLeftShoulder
+  )
+  const rightShoulderVel = calculateVelocity(
+    keypoints[KEYPOINTS.RIGHT_SHOULDER],
+    history.smoothedRightShoulder
+  )
+
+  // If shoulders moving too much, it's not a nod (probably arm movement)
+  if (leftShoulderVel > 4 || rightShoulderVel > 4) {
+    return null // Reject - shoulders moving = probably arm gesture
+  }
 
   const verticalVelocity = Math.abs(nose.y - prevNose.y)
   const horizontalVelocity = Math.abs(nose.x - prevNose.x)
 
-  // Nod: More vertical than horizontal movement
+  // STRICTER: Vertical must be MUCH more than horizontal
   if (
     verticalVelocity > NOD_VELOCITY_THRESHOLD &&
-    horizontalVelocity < verticalVelocity * 0.5
+    horizontalVelocity < verticalVelocity * 0.3 // Changed from 0.5 to 0.3
   ) {
     const avgEyeConfidence = (leftEye.score + rightEye.score) / 2
     const combinedConfidence = (nose.score + avgEyeConfidence) / 2
@@ -276,10 +292,38 @@ export function updateGestureHistory(keypoints, previousHistory) {
     )
   }
 
+  const smoothedLeftShoulder = {
+    x: exponentialMovingAverage(
+      keypoints[KEYPOINTS.LEFT_SHOULDER]?.x,
+      previousHistory?.smoothedLeftShoulder?.x,
+      SMOOTHING_FACTOR
+    ),
+    y: exponentialMovingAverage(
+      keypoints[KEYPOINTS.LEFT_SHOULDER]?.y,
+      previousHistory?.smoothedLeftShoulder?.y,
+      SMOOTHING_FACTOR
+    )
+  }
+
+  const smoothedRightShoulder = {
+    x: exponentialMovingAverage(
+      keypoints[KEYPOINTS.RIGHT_SHOULDER]?.x,
+      previousHistory?.smoothedRightShoulder?.x,
+      SMOOTHING_FACTOR
+    ),
+    y: exponentialMovingAverage(
+      keypoints[KEYPOINTS.RIGHT_SHOULDER]?.y,
+      previousHistory?.smoothedRightShoulder?.y,
+      SMOOTHING_FACTOR
+    )
+  }
+
   return {
     smoothedLeftWrist,
     smoothedRightWrist,
     smoothedNose,
+    smoothedLeftShoulder,
+    smoothedRightShoulder,
     rawKeypoints: keypoints
   }
 }
