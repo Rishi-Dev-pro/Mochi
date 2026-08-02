@@ -1,3 +1,4 @@
+import * as tf from '@tensorflow/tfjs'
 import * as faceapi from 'face-api.js'
 
 // ============ EMOTION DETECTION SERVICE ============
@@ -38,6 +39,12 @@ export class FacialEmotionDetector {
   // Initialize face-api.js models
   async initialize() {
     try {
+      // Ensure TensorFlow.js backend is initialized before loading models
+      await tf.ready()
+      if (faceapi.tf && typeof faceapi.tf.ready === 'function') {
+        await faceapi.tf.ready()
+      }
+
       const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/'
 
       await Promise.all([
