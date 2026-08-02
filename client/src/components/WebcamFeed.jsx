@@ -1,77 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react'
-import PoseDetector from './PoseDetector'
+import React, { useEffect, useRef } from 'react'
+import { useWebcam } from '../context/WebcamContext'
 import './WebcamFeed.css'
 
 export default function WebcamFeed() {
-  const videoRef = useRef(null)
-  const streamRef = useRef(null)
-  const [status, setStatus] = useState('idle') // idle | requesting | active | denied | error
-  const [error, setError] = useState(null)
-
-  const requestCameraAccess = async () => {
-    setStatus('requesting')
-    setError(null)
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 } },
-        audio: false,
-      })
-
-      streamRef.current = stream
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        try {
-          await videoRef.current.play()
-        } catch (playErr) {
-          console.warn('Autoplay warning:', playErr)
-        }
-      }
-
-      setStatus('active')
-    } catch (err) {
-      console.error('Camera error:', err)
-
-      if (err.name === 'NotAllowedError') {
-        setStatus('denied')
-        setError('Camera permission denied. Please allow access in browser settings.')
-      } else if (err.name === 'NotFoundError') {
-        setStatus('error')
-        setError('No camera found on this device.')
-      } else {
-        setStatus('error')
-        setError(`Camera error: ${err.message}`)
-      }
-    }
-  }
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop())
-      streamRef.current = null
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null
-    }
-    setStatus('idle')
-  }
-
-  // Guarantee stream is bound to video element whenever active
-  useEffect(() => {
-    if (status === 'active' && videoRef.current && streamRef.current) {
-      if (videoRef.current.srcObject !== streamRef.current) {
-        videoRef.current.srcObject = streamRef.current
-        videoRef.current.play().catch(console.warn)
-      }
-    }
-  }, [status])
+  const { isEnabled, status, streamRef, enableWebcam, disableWebcam } = useWebcam()
+  const previewVideoRef = useRef(null)
 
   useEffect(() => {
-    return () => {
-      stopCamera()
+    if (isEnabled && status === 'active' && previewVideoRef.current && streamRef.current) {
+      if (previewVideoRef.current.srcObject !== streamRef.current) {
+        previewVideoRef.current.srcObject = streamRef.current
+        previewVideoRef.current.play().catch(console.warn)
+      }
     }
-  }, [])
+  }, [isEnabled, status, streamRef])
 
   return (
     <div className="webcam-container">
@@ -80,7 +22,7 @@ export default function WebcamFeed() {
 
       <div className="webcam-wrapper">
         <video
-          ref={videoRef}
+          ref={previewVideoRef}
           autoPlay
           playsInline
           muted
@@ -103,24 +45,20 @@ export default function WebcamFeed() {
         )}
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-
-      {status === 'active' && <PoseDetector videoRef={videoRef} />}
-
       <div className="button-group">
         {status === 'idle' || status === 'denied' || status === 'error' ? (
-          <button className="btn btn-primary" onClick={requestCameraAccess}>
+          <button className="btn btn-primary" onClick={enableWebcam}>
             Enable Webcam
           </button>
         ) : (
-          <button className="btn btn-danger" onClick={stopCamera}>
+          <button className="btn btn-danger" onClick={disableWebcam}>
             Disable Webcam
           </button>
         )}
       </div>
 
       <p className="info-text">
-        {status === 'active' && '✅ Webcam is active. Ready for gesture detection.'}
+        {status === 'active' && '✅ Webcam is active across all pages. Ready for gesture & emotion detection.'}
         {status === 'requesting' && '⏳ Requesting camera permission...'}
         {status === 'denied' && '❌ Camera access denied. Check browser settings.'}
         {status === 'error' && '❌ Camera error. Try reloading the page.'}

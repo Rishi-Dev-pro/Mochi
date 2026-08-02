@@ -1,17 +1,36 @@
-import React from 'react'
+import { useWebcam } from '../context/WebcamContext'
 import WebcamFeed from '../components/WebcamFeed'
+import '../styles/settings.css'
 
 export default function SettingsPage() {
-  return (
-    <div className="page">
-      <h1>Settings</h1>
-      <p>Customize Mochi's behavior and permissions.</p>
+  const { isEnabled, enableWebcam, disableWebcam } = useWebcam()
 
-      <WebcamFeed />
+  return (
+    <div className="page settings-page">
+      <h1>Settings</h1>
+      
+      <div className="settings-section">
+        <h2>Webcam & Motion Detection</h2>
+        
+        {!isEnabled ? (
+          <button onClick={enableWebcam} className="btn-primary">
+            🎥 Enable Webcam
+          </button>
+        ) : (
+          <button onClick={disableWebcam} className="btn-danger">
+            🚫 Disable Webcam
+          </button>
+        )}
+
+        {isEnabled && <WebcamFeed />}
+      </div>
 
       <div className="settings-section">
-        <h3>General Settings</h3>
-        <p>More settings coming soon...</p>
+        <h3>Privacy Notice</h3>
+        <p>
+          Your webcam stream is processed locally in your browser. 
+          No video data is sent to servers.
+        </p>
       </div>
     </div>
   )

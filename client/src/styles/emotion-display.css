@@ -1,0 +1,87 @@
+.header-with-emotion {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.emotion-badge {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 2px solid #9ca3af;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  min-width: 200px;
+}
+
+.emotion-emoji {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.emotion-info {
+  flex: 1;
+}
+
+.emotion-type {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  text-transform: capitalize;
+}
+
+.emotion-intensity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.intensity-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.intensity-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.emotion-intensity span {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  min-width: 35px;
+  text-align: right;
+}
+
+.emotion-context {
+  padding: 12px 16px;
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid #3b82f6;
+  border-radius: 6px;
+  color: #2c3e50;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .header-with-emotion {
+    flex-direction: column;
+  }
+
+  .emotion-badge {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .emotion-emoji {
+    font-size: 2rem;
+  }
+}
