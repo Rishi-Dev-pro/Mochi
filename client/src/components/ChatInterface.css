@@ -16,6 +16,16 @@
   flex-shrink: 0;
 }
 
+.chat-emotion-indicator {
+  padding: 8px 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid #3b82f6;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 12px;
+  border-radius: 4px;
+}
+
 .header-content {
   display: flex;
   align-items: center;

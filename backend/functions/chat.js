@@ -7,11 +7,15 @@ import {
 
 export async function sendMessage(req, res) {
   try {
-    const { message, conversationHistory = [] } = req.body
+    const { message, conversationHistory = [], systemPrompt } = req.body
 
     // Validate input
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Message required and must be string' })
+    }
+
+    if (systemPrompt && systemPrompt.includes('User Emotion Context')) {
+      console.log('📊 Emotion-aware response triggered')
     }
 
     const apiKey = NVIDIA_API_KEY || process.env.NVIDIA_API_KEY
@@ -23,7 +27,7 @@ export async function sendMessage(req, res) {
 
     // Build message history for Nvidia (OpenAI format)
     const messages = [
-      { role: 'system', content: MOCHI_SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt || MOCHI_SYSTEM_PROMPT },
       ...conversationHistory,
       { role: 'user', content: message }
     ]

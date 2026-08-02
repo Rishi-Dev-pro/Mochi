@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useClaude } from '../hooks/useClaude'
+import { useEmotionAwareChat } from '../hooks/useEmotionAwareChat'
+import { formatEmotionSummary } from '../services/emotionAwareChatService'
 import './ChatInterface.css'
 
 export default function ChatInterface() {
   const { messages, sendMessage, loading } = useClaude()
+  const { currentEmotion } = useEmotionAwareChat()
   const [input, setInput] = useState('')
   const messagesEndRef = useRef(null)
 
@@ -46,6 +49,12 @@ export default function ChatInterface() {
       </div>
 
       <div className="messages-area">
+        {currentEmotion && (
+          <div className="chat-emotion-indicator">
+            {formatEmotionSummary(currentEmotion)}
+          </div>
+        )}
+
         {messages.length === 0 ? (
           <div className="empty-state">
             <p className="empty-icon">💬</p>

@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
-import { sendChatMessage, parseEmotionFromResponse } from '../services/llmService'
+import { sendChatMessage } from '../services/llmService'
+import { useEmotionStore } from '../store/emotionStore'
+import { buildEmotionContext } from '../services/emotionAwareChatService'
 
 const INITIAL_MOCHI_MESSAGE = {
   id: 'welcome-msg',
@@ -10,11 +12,6 @@ const INITIAL_MOCHI_MESSAGE = {
   timestamp: new Date().toISOString(),
 }
 
-/**
- * Parses raw text from Claude response to extract XML emotion tags and clean message content.
- * @param {string} rawText - Raw text response from Claude.
- * @returns {{ emotion: string, intensity: number, text: string }}
- */
 export function parseEmotionAndText(rawText) {
   if (!rawText) {
     return { emotion: 'neutral', intensity: 0.5, text: '' }
@@ -34,7 +31,6 @@ export function parseEmotionAndText(rawText) {
     }
   }
 
-  // Fallback if tags are omitted or formatted slightly differently
   const cleanText = rawText.replace(/<\/?emotion[^>]*>/gi, '').trim()
   return {
     emotion: 'happy',
@@ -65,13 +61,15 @@ export function useClaude() {
     setMessages((prev) => [...prev, userMessage])
 
     try {
-      // Build history for API request
+      const currentEmotion = useEmotionStore.getState().currentEmotion
+      const emotionContext = buildEmotionContext(currentEmotion)
+
       const currentHistory = [...messages, userMessage].map((msg) => ({
         role: msg.role,
         content: msg.content,
       }))
 
-      const rawResponse = await sendChatMessage(currentHistory)
+      const rawResponse = await sendChatMessage(currentHistory, [], emotionContext)
       const parsed = parseEmotionAndText(rawResponse)
 
       const assistantMessage = {
