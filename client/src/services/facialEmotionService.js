@@ -24,7 +24,7 @@ const EMOTION_EMOJIS = {
 }
 
 // Confidence threshold (0-1)
-const MIN_EMOTION_CONFIDENCE = 0.5
+const MIN_EMOTION_CONFIDENCE = 0.35
 
 // Smoothing factor for emotion transitions (0-1, lower = smoother)
 const EMOTION_SMOOTHING = 0.2

@@ -1,20 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { getFacialEmotionDetector } from '../services/facialEmotionService'
-import { useEmotionStore } from '../store/useEmotionStore'
+import { useEmotionStore } from '../store/emotionStore'
 
 export default function FacialEmotionDetector({ videoRef, isActive }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const detectorRef = useRef(null)
   const animationFrameRef = useRef(null)
-  const emotionStore = useEmotionStore()
 
   // Initialize detector
   useEffect(() => {
+    let isMounted = true
+
     const initDetector = async () => {
       try {
         const detector = getFacialEmotionDetector()
         const success = await detector.initialize()
+
+        if (!isMounted) return
 
         if (success) {
           detectorRef.current = detector
@@ -26,79 +29,79 @@ export default function FacialEmotionDetector({ videoRef, isActive }) {
         }
       } catch (err) {
         console.error('Detector init error:', err)
-        setError('Error loading emotion models')
-        setIsLoading(false)
+        if (isMounted) {
+          setError('Error loading emotion models')
+          setIsLoading(false)
+        }
       }
     }
 
     initDetector()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   // Run emotion detection loop
   useEffect(() => {
-    if (!isActive || !detectorRef.current || !videoRef?.current) {
+    if (isLoading || !isActive || !detectorRef.current || !videoRef?.current) {
       return
     }
 
+    let isSubscribed = true
+
     const detectLoop = async () => {
+      if (!isSubscribed) return
+
       try {
-        if (!videoRef.current || videoRef.current.paused) {
-          animationFrameRef.current = requestAnimationFrame(detectLoop)
-          return
-        }
+        const video = videoRef.current
+        if (video && !video.paused && video.readyState >= 2) {
+          // Detect emotion from video
+          const emotionData = await detectorRef.current.detectEmotionFromVideo(video)
 
-        // Detect emotion from video
-        const emotionData = await detectorRef.current.detectEmotionFromVideo(
-          videoRef.current
-        )
+          if (emotionData && isSubscribed) {
+            // Smooth emotion transitions
+            const smoothedEmotion = detectorRef.current.smoothEmotion(emotionData)
 
-        if (emotionData) {
-          // Smooth emotion transitions
-          const smoothedEmotion = detectorRef.current.smoothEmotion(emotionData)
+            if (smoothedEmotion) {
+              const intensity = detectorRef.current.confidenceToIntensity(
+                smoothedEmotion.confidence
+              )
+              const context = detectorRef.current.getEmotionContext(
+                smoothedEmotion.emotion,
+                smoothedEmotion.confidence
+              )
 
-          if (smoothedEmotion) {
-            const intensity = detectorRef.current.confidenceToIntensity(
-              smoothedEmotion.confidence
-            )
-            const context = detectorRef.current.getEmotionContext(
-              smoothedEmotion.emotion,
-              smoothedEmotion.confidence
-            )
-
-            // Update Zustand store
-            emotionStore.setEmotion(
-              smoothedEmotion.emotion,
-              intensity,
-              context,
-              'facial_expression'
-            )
+              // Update Zustand store
+              useEmotionStore.getState().setEmotion(
+                smoothedEmotion.emotion,
+                intensity,
+                context,
+                'facial_expression'
+              )
+            }
           }
         }
       } catch (err) {
         console.error('Emotion detection loop error:', err)
       }
 
-      // Continue loop
-      animationFrameRef.current = requestAnimationFrame(detectLoop)
+      // Continue loop if still subscribed
+      if (isSubscribed) {
+        animationFrameRef.current = requestAnimationFrame(detectLoop)
+      }
     }
 
     animationFrameRef.current = requestAnimationFrame(detectLoop)
 
     return () => {
+      isSubscribed = false
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [isActive, videoRef, emotionStore])
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
-    }
-  }, [])
+  }, [isActive, videoRef, isLoading])
 
   if (error) {
     return (

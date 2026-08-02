@@ -7,7 +7,8 @@ export const EMOTION_TYPES = {
   CONCERNED: 'concerned',
   SLEEPY: 'sleepy',
   EXCITED: 'excited',
-  NEUTRAL: 'neutral'
+  NEUTRAL: 'neutral',
+  ANGRY: 'angry'
 }
 
 // Emotion emoji map
@@ -17,7 +18,8 @@ export const EMOTION_EMOJIS = {
   concerned: '😟',
   sleepy: '😴',
   excited: '🎉',
-  neutral: '😐'
+  neutral: '😐',
+  angry: '😠'
 }
 
 // Create Zustand store
@@ -135,7 +137,8 @@ export const useEmotionStore = create((set, get) => ({
       concerned: '#f87171', // red
       sleepy: '#a78bfa', // purple
       excited: '#34d399', // emerald
-      neutral: '#9ca3af' // gray
+      neutral: '#9ca3af', // gray
+      angry: '#ef4444' // red
     }
     return colors[get().currentEmotion.type] || '#9ca3af'
   },
