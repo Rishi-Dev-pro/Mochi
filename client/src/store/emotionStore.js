@@ -3,23 +3,35 @@ import { create } from 'zustand'
 // Emotion types
 export const EMOTION_TYPES = {
   HAPPY: 'happy',
-  CURIOUS: 'curious',
-  CONCERNED: 'concerned',
+  ANGRY: 'angry',
+  SHOUTING: 'shouting',
+  WAVING: 'waving',
+  TEASING: 'teasing',
+  SAD: 'sad',
+  SURPRISED: 'surprised',
+  CONFUSED: 'confused',
   SLEEPY: 'sleepy',
   EXCITED: 'excited',
-  NEUTRAL: 'neutral',
-  ANGRY: 'angry'
+  CURIOUS: 'curious',
+  CONCERNED: 'concerned',
+  NEUTRAL: 'neutral'
 }
 
 // Emotion emoji map
 export const EMOTION_EMOJIS = {
   happy: '😊',
-  curious: '🤔',
-  concerned: '😟',
+  angry: '😠',
+  shouting: '📢',
+  waving: '👋',
+  teasing: '😜',
+  sad: '😢',
+  surprised: '😲',
+  confused: '🤔',
   sleepy: '😴',
   excited: '🎉',
-  neutral: '😐',
-  angry: '😠'
+  curious: '🧐',
+  concerned: '😟',
+  neutral: '😐'
 }
 
 // Create Zustand store
@@ -68,49 +80,42 @@ export const useEmotionStore = create((set, get) => ({
 
   // React to gesture (secondary emotion trigger)
   reactToGesture: (gesture) => {
-    // Gestures enhance but don't override facial emotion
     const reactions = {
-      wave: { intensity: 10 }, // +10 to current intensity
-      nod: { intensity: 5 },
-      point: { intensity: 15 }
+      wave: { type: EMOTION_TYPES.WAVING, intensity: 80 },
+      nod: { type: EMOTION_TYPES.HAPPY, intensity: 60 },
+      point: { type: EMOTION_TYPES.CURIOUS, intensity: 75 }
     }
 
     const reaction = reactions[gesture.gesture]
     if (reaction) {
-      const currentIntensity = get().currentEmotion.intensity
-      const newIntensity = Math.min(100, currentIntensity + reaction.intensity)
-      get().setIntensity(newIntensity)
+      get().setEmotion(reaction.type, reaction.intensity, `Gesture detected: ${gesture.gesture}`, 'gesture')
     }
   },
 
   // React to chat message
   reactToMessage: (message) => {
-    // Simple sentiment detection
-    const positive = /good|great|awesome|amazing|love|happy|yes/i.test(message)
-    const negative = /bad|hate|sad|angry|no/i.test(message)
-    const question = /\?/.test(message)
-
-    if (positive) {
-      get().setEmotion(
-        EMOTION_TYPES.HAPPY,
-        80,
-        `Positive message: "${message.slice(0, 30)}..."`,
-        'message'
-      )
-    } else if (negative) {
-      get().setEmotion(
-        EMOTION_TYPES.CONCERNED,
-        70,
-        `Negative message: "${message.slice(0, 30)}..."`,
-        'message'
-      )
-    } else if (question) {
-      get().setEmotion(
-        EMOTION_TYPES.CURIOUS,
-        75,
-        `Question asked: "${message.slice(0, 30)}..."`,
-        'message'
-      )
+    const msg = message.toLowerCase()
+    
+    if (/shout|yell|stop|screaming|hey!|wake up!/i.test(msg) || (message === message.toUpperCase() && message.length > 4)) {
+      get().setEmotion(EMOTION_TYPES.SHOUTING, 90, `Message: "${message.slice(0, 30)}"`, 'message')
+    } else if (/angry|mad|furious|hate|annoyed|shut up/i.test(msg)) {
+      get().setEmotion(EMOTION_TYPES.ANGRY, 85, `Message: "${message.slice(0, 30)}"`, 'message')
+    } else if (/wave|hi|hello|hey|greetings|bye/i.test(msg)) {
+      get().setEmotion(EMOTION_TYPES.WAVING, 80, `Message: "${message.slice(0, 30)}"`, 'message')
+    } else if (/tease|troll|fool|joke|lol|haha|tongue|silly/i.test(msg)) {
+      get().setEmotion(EMOTION_TYPES.TEASING, 85, `Message: "${message.slice(0, 30)}"`, 'message')
+    } else if (/sad|cry|hurt|sorry|unhappy|depressed/i.test(msg)) {
+      get().setEmotion(EMOTION_TYPES.SAD, 80, `Message: "${message.slice(0, 30)}"`, 'message')
+    } else if (/what|wow|omg|surprise|really|whoa|amazing/i.test(msg)) {
+      get().setEmotion(EMOTION_TYPES.SURPRISED, 85, `Message: "${message.slice(0, 30)}"`, 'message')
+    } else if (/confused|huh|why|how|idk|dont understand/i.test(msg)) {
+      get().setEmotion(EMOTION_TYPES.CONFUSED, 75, `Message: "${message.slice(0, 30)}"`, 'message')
+    } else if (/tired|sleepy|night|bored|nap/i.test(msg)) {
+      get().setEmotion(EMOTION_TYPES.SLEEPY, 70, `Message: "${message.slice(0, 30)}"`, 'message')
+    } else if (/happy|good|great|awesome|love|yay|nice/i.test(msg)) {
+      get().setEmotion(EMOTION_TYPES.HAPPY, 80, `Message: "${message.slice(0, 30)}"`, 'message')
+    } else if (/\?/.test(msg)) {
+      get().setEmotion(EMOTION_TYPES.CURIOUS, 75, `Question asked: "${message.slice(0, 30)}"`, 'message')
     }
   },
 
@@ -133,12 +138,18 @@ export const useEmotionStore = create((set, get) => ({
   getEmotionColor: () => {
     const colors = {
       happy: '#fbbf24', // amber
-      curious: '#60a5fa', // blue
-      concerned: '#f87171', // red
-      sleepy: '#a78bfa', // purple
-      excited: '#34d399', // emerald
-      neutral: '#9ca3af', // gray
-      angry: '#ef4444' // red
+      angry: '#ef4444', // red
+      shouting: '#ff4500', // orange-red
+      waving: '#38bdf8', // sky blue
+      teasing: '#ec4899', // pink
+      sad: '#3b82f6', // blue
+      surprised: '#a855f7', // purple
+      confused: '#eab308', // yellow
+      sleepy: '#8b5cf6', // violet
+      excited: '#10b981', // emerald
+      curious: '#06b6d4', // cyan
+      concerned: '#f97316', // orange
+      neutral: '#9ca3af' // gray
     }
     return colors[get().currentEmotion.type] || '#9ca3af'
   },
@@ -148,3 +159,4 @@ export const useEmotionStore = create((set, get) => ({
     get().setEmotion(EMOTION_TYPES.NEUTRAL, 50, 'Reset')
   }
 }))
+
