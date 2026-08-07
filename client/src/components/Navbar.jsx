@@ -1,17 +1,45 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import './Navbar.css'
 
 export default function Navbar() {
+  const location = useLocation()
+  const currentPath = location.pathname
+
+  const navItems = [
+    { path: '/', label: 'Home', icon: '🌾' },
+    { path: '/chat', label: 'Chat', icon: '📖' },
+    { path: '/emotion-history', label: 'History', icon: '🗺️' },
+    { path: '/settings', label: 'Settings', icon: '⚙️' }
+  ]
+
   return (
-    <nav className="navbar">
-      <div className="nav-container">
-        <Link to="/" className="nav-logo">🌙 Mochi</Link>
-        <ul className="nav-menu">
-          <li><Link to="/" className="nav-link">Home</Link></li>
-          <li><Link to="/chat" className="nav-link">Chat</Link></li>
-          <li><Link to="/emotion-history" className="nav-link">📊 History</Link></li>
-          <li><Link to="/settings" className="nav-link">Settings</Link></li>
-        </ul>
+    <nav className="minecraft-navbar">
+      <div className="mc-nav-container">
+        
+        {/* Logo */}
+        <Link to="/" className="mc-nav-logo">
+          <span className="logo-icon float-effect">🌸</span>
+          <span className="logo-text pixel-font">MOCHI</span>
+        </Link>
+
+        {/* 3D Minecraft Hotbar Nav Slots */}
+        <div className="mc-hotbar-hud">
+          {navItems.map((item) => {
+            const isActive = currentPath === item.path
+            return (
+              <Link 
+                key={item.path} 
+                to={item.path} 
+                className={`mc-hotbar-slot ${isActive ? 'active-slot' : ''}`}
+              >
+                <span className="slot-icon">{item.icon}</span>
+                <span className="slot-label">{item.label}</span>
+                {isActive && <div className="active-glow-indicator" />}
+              </Link>
+            )
+          })}
+        </div>
+
       </div>
     </nav>
   )

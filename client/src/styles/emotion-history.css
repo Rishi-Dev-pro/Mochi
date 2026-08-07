@@ -1,81 +1,90 @@
+/* ============ 3D MINECRAFT EMOTION HISTORY & HIGH CONTRAST ============ */
+
 .emotion-history-page {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 20px;
 }
 
 .emotion-history-page h1 {
   text-align: center;
-  margin-bottom: 30px;
-  font-size: 2.5rem;
+  margin-bottom: 24px;
+  font-size: 2.6rem;
 }
 
 .emotion-history-page h2 {
-  margin-top: 30px;
-  margin-bottom: 20px;
+  margin-top: 0;
+  margin-bottom: 16px;
   font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 /* Statistics Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 30px;
+  gap: 18px;
+  margin-bottom: 28px;
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 20px;
+  background: rgba(30, 20, 36, 0.85);
+  backdrop-filter: blur(16px);
+  border: 2px solid rgba(255, 183, 197, 0.3);
+  border-radius: 16px;
+  padding: 22px;
   text-align: center;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .stat-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--mc-sakura-glow);
   transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6), var(--mc-glow-sakura);
 }
 
 .stat-label {
   margin: 0;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  color: var(--mc-sakura-light);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  font-family: 'Minecraftia', monospace;
 }
 
 .stat-value {
-  margin: 12px 0 0 0;
-  font-size: 2rem;
-  font-weight: bold;
-  color: white;
+  margin: 10px 0 0 0;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
 /* Distribution Section */
 .distribution-section {
-  background: rgba(59, 130, 246, 0.1);
-  border: 2px solid rgba(59, 130, 246, 0.2);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 30px;
+  background: rgba(26, 18, 32, 0.85);
+  backdrop-filter: blur(16px);
+  border: 2px solid rgba(255, 183, 197, 0.3);
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .distribution-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 16px;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 .distribution-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  padding: 12px;
+  background: rgba(44, 28, 48, 0.8);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 183, 197, 0.25);
 }
 
 .distribution-header {
@@ -86,107 +95,120 @@
 }
 
 .distribution-header span:first-child {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
 }
 
 .emotion-name {
-  font-weight: 600;
-  color: white;
+  font-weight: 700;
+  color: #ffffff;
   text-transform: capitalize;
 }
 
 .distribution-bar {
   width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
   overflow: hidden;
   margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .distribution-fill {
   height: 100%;
-  transition: width 0.3s ease;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
 
 .distribution-text {
   margin: 0;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.95);
   text-align: center;
+  font-weight: 600;
 }
 
 /* Filter Controls */
 .filter-controls {
   display: flex;
-  gap: 12px;
-  margin-bottom: 30px;
+  gap: 10px;
+  margin-bottom: 28px;
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .filter-btn {
-  padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  border-radius: 8px;
+  padding: 10px 22px;
+  background: rgba(38, 24, 42, 0.8);
+  border: 2px solid rgba(255, 183, 197, 0.3);
+  color: #ffffff;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .filter-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(62, 38, 68, 0.9);
+  border-color: var(--mc-sakura-glow);
+  transform: translateY(-2px);
 }
 
 .filter-btn.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
+  background: linear-gradient(135deg, var(--mc-sakura-glow) 0%, var(--mc-sakura-dark) 100%);
+  border-color: var(--mc-sakura-light);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(255, 133, 162, 0.5);
 }
 
 /* Timeline Section */
 .timeline-section {
-  margin-bottom: 30px;
+  margin-bottom: 28px;
 }
 
 .timeline {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 20px;
-  max-height: 600px;
+  background: rgba(24, 16, 28, 0.85);
+  backdrop-filter: blur(16px);
+  border: 2px solid rgba(255, 183, 197, 0.3);
+  border-radius: 18px;
+  padding: 24px;
+  max-height: 550px;
   overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .empty-state {
   text-align: center;
   padding: 40px 20px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--mc-sakura-light);
   font-size: 1.1rem;
 }
 
 .timeline-item {
   display: flex;
   gap: 16px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-left: 4px solid;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
-  align-items: flex-start;
+  padding: 16px 20px;
+  background: rgba(44, 28, 48, 0.75);
+  border-left: 5px solid;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  transition: all 0.25s ease;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
 }
 
 .timeline-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(62, 38, 68, 0.85);
+  transform: translateX(4px);
 }
 
 .timeline-emoji {
-  font-size: 2rem;
+  font-size: 2.4rem;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
 }
 
 .timeline-content {
@@ -196,101 +218,37 @@
 
 .timeline-emotion {
   margin: 0 0 4px 0;
-  font-weight: 600;
-  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
   text-transform: capitalize;
 }
 
 .timeline-intensity {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--mc-sakura-light);
+  font-weight: 600;
 }
 
 .timeline-context {
   margin: 4px 0;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.9);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .timeline-time {
-  margin: 8px 0 0 0;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.timeline-bar {
-  width: 4px;
-  min-height: 60px;
-  border-radius: 2px;
-  flex-shrink: 0;
-  opacity: 0.7;
+  margin: 6px 0 0 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: 'Minecraftia', monospace;
 }
 
 /* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: center;
-  margin-top: 30px;
-}
-
-.btn-primary,
-.btn-danger {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #2563eb;
-  transform: translateY(-2px);
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #dc2626;
-  transform: translateY(-2px);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .emotion-history-page h1 {
-    font-size: 1.8rem;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .distribution-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .timeline {
-    max-height: 400px;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-  }
-
-  .btn-primary,
-  .btn-danger {
-    width: 100%;
-  }
+  margin-top: 28px;
 }

@@ -99,7 +99,6 @@ export function WebcamProvider({ children }) {
           pointerEvents: 'none'
         }}
       />
-      {status === 'active' && <PoseDetector videoRef={videoRef} />}
       {status === 'active' && <FacialEmotionDetector videoRef={videoRef} isActive={status === 'active'} />}
       {children}
     </WebcamContext.Provider>

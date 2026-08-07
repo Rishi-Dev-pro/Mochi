@@ -1,0 +1,141 @@
+/* ============ MINECRAFT 3D AESTHETIC BLOCK THEME ============ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Press+Start+2P&family=Minecraftia&display=swap');
+
+:root {
+  /* Minecraft Block Colors (Pastel Cherry Grove & Shader Shading) */
+  --mc-cherry-pink: #ffb7c5;
+  --mc-sakura-light: #ffe4e9;
+  --mc-sakura-glow: #ff85a2;
+  --mc-sakura-dark: #d85a7f;
+  
+  --mc-grass-top: #88b04b;
+  --mc-grass-side: #6b8e3d;
+  --mc-dirt-base: #5c3d2e;
+  
+  --mc-wood-cherry: #7e4b41;
+  --mc-wood-bark: #4a2e26;
+  
+  --mc-stone-base: #2d2636;
+  --mc-stone-highlight: #463b54;
+  
+  --mc-gold: #ffdf7d;
+  --mc-diamond: #7ee8fa;
+  --mc-emerald: #50c878;
+  --mc-amethyst: #c084fc;
+  
+  /* 3D Shadows & Bevels */
+  --mc-border-light: rgba(255, 255, 255, 0.4);
+  --mc-border-dark: rgba(0, 0, 0, 0.5);
+  --mc-shadow-3d: 0 16px 36px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.3);
+  --mc-glow-sakura: 0 0 25px rgba(255, 133, 162, 0.4);
+}
+
+/* ============ GLOBAL TYPOGRAPHY & RESET ============ */
+
+* {
+  font-family: 'Outfit', sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  background: url('/assets/minecraft-bg.jpg') center center / cover no-repeat fixed;
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  min-height: 100vh;
+  perspective: 1200px;
+}
+
+/* Minecraft Environment Scene */
+.minecraft-sky {
+  background: url('/assets/minecraft-bg.jpg') center center / cover no-repeat fixed;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Atmospheric shader ambient filter */
+.minecraft-sky::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 25%, rgba(255, 183, 197, 0.15) 0%, rgba(16, 10, 20, 0.65) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.minecraft-sky > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============ HEADINGS & TYPOGRAPHY ============ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  margin: 0.4em 0;
+}
+
+h1 {
+  font-size: 3rem;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 0%, var(--mc-sakura-light) 40%, var(--mc-cherry-pink) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.7));
+}
+
+h2 {
+  font-size: 1.8rem;
+}
+
+h3 {
+  font-size: 1.3rem;
+  color: var(--mc-sakura-light);
+}
+
+p {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Pixel Fonts */
+.pixel-font {
+  font-family: 'Minecraftia', 'Press Start 2P', monospace !important;
+  letter-spacing: 0.05em;
+}
+
+/* ============ 3D SCROLLBAR ============ */
+
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(18, 12, 22, 0.85);
+  border-left: 2px solid rgba(255, 183, 197, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--mc-sakura-glow) 0%, var(--mc-sakura-dark) 100%);
+  border: 2px solid rgba(18, 12, 22, 0.85);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mc-cherry-pink);
+}
+
+@media (max-width: 768px) {
+  h1 { font-size: 2.2rem; }
+  h2 { font-size: 1.5rem; }
+}

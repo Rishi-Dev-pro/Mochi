@@ -1,41 +1,55 @@
+/* ============ 3D MINECRAFT WEBCAM FEED & SKELETON DISPLAY ============ */
+
 .webcam-container {
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 20px;
+  padding: 24px;
+  background: rgba(28, 18, 32, 0.85);
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border-top: 3px solid rgba(255, 183, 197, 0.4);
+  border-left: 3px solid rgba(255, 183, 197, 0.3);
+  border-right: 3px solid rgba(0, 0, 0, 0.7);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.8);
+  box-shadow: var(--mc-shadow-3d);
+  margin-bottom: 24px;
+  text-align: center;
 }
 
 .webcam-container h3 {
   margin-top: 0;
-  margin-bottom: 8px;
-  color: #1e293b;
-  font-size: 1.2rem;
+  margin-bottom: 6px;
+  color: #ffffff;
+  font-size: 1.4rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .subtitle {
-  margin: 0 0 16px 0;
-  color: #64748b;
-  font-size: 0.9rem;
+  margin: 0 0 20px 0;
+  color: var(--mc-sakura-light);
+  font-size: 0.95rem;
 }
 
+/* Centered Webcam Wrapper */
 .webcam-wrapper {
   position: relative;
   width: 100%;
-  max-width: 500px;
+  max-width: 540px;
   aspect-ratio: 4 / 3;
-  background: #000;
-  border-radius: 8px;
+  background: #0d0812;
+  border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  margin: 0 auto 20px auto;
+  border-top: 3px solid rgba(255, 183, 197, 0.5);
+  border-left: 3px solid rgba(255, 183, 197, 0.35);
+  border-right: 3px solid rgba(0, 0, 0, 0.7);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.8);
+  box-shadow: var(--mc-shadow-3d), var(--mc-glow-sakura);
 }
 
 .video-feed {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .placeholder {
@@ -44,40 +58,45 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--mc-sakura-light);
 }
 
 .placeholder-icon {
-  font-size: 3rem;
+  font-size: 3.5rem;
   margin-bottom: 8px;
   margin-top: 0;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
 }
 
 .placeholder p {
   margin: 0;
   font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .camera-indicator {
   position: absolute;
   top: 12px;
   right: 12px;
-  padding: 6px 12px;
-  background: rgba(239, 68, 68, 0.9);
-  color: white;
+  padding: 6px 14px;
+  background: rgba(24, 16, 28, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid #ef4444;
+  color: #ff8888;
   border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 6px;
+  font-family: 'Minecraftia', monospace;
 }
 
 .recording-dot {
   display: inline-block;
   width: 8px;
   height: 8px;
-  background: white;
+  background: #ef4444;
   border-radius: 50%;
   animation: pulse 1.5s infinite;
 }
@@ -85,68 +104,33 @@
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.4;
+    transform: scale(0.8);
   }
-}
-
-.error-message {
-  padding: 12px 16px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  border-radius: 8px;
-  color: #ef4444;
-  font-size: 0.9rem;
-  margin-bottom: 16px;
-  border-left: 4px solid #ef4444;
 }
 
 .button-group {
   display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 0.95rem;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.4);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.btn-danger {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.5);
-}
-
-.btn-danger:hover {
-  background: rgba(239, 68, 68, 0.3);
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .info-text {
   margin: 0;
-  color: #64748b;
-  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
   text-align: center;
+}
+
+/* Skeleton Detector Sub-Panel */
+.skeleton-sub-panel {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px solid rgba(255, 183, 197, 0.2);
 }
 
 @media (max-width: 768px) {
@@ -155,6 +139,6 @@
   }
 
   .webcam-container {
-    padding: 16px;
+    padding: 18px;
   }
 }
