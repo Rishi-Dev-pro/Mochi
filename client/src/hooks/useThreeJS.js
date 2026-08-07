@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { useEmotionStore } from '../store/useEmotionStore'
 
 export function useThreeJS(containerRef) {
   const sceneRef = useRef(null)
   const rendererRef = useRef(null)
   const characterGroupRef = useRef(null)
   const headGroupRef = useRef(null)
+  const hairGroupRef = useRef(null)
   const leftArmRef = useRef(null)
   const rightArmRef = useRef(null)
 
@@ -21,7 +21,7 @@ export function useThreeJS(containerRef) {
     const width = containerRef.current.clientWidth
     const height = containerRef.current.clientHeight
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000)
-    camera.position.set(0, 0.4, 4.5)
+    camera.position.set(0, 0.3, 4.6)
 
     // Renderer setup
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -32,27 +32,25 @@ export function useThreeJS(containerRef) {
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
-    // Soft Aesthetic Lighting
-    const ambientLight = new THREE.AmbientLight(0xfff0f5, 0.9)
+    // Soft Studio Lighting
+    const ambientLight = new THREE.AmbientLight(0xfff5f8, 0.95)
     scene.add(ambientLight)
 
-    const mainLight = new THREE.DirectionalLight(0xffffff, 1.2)
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.25)
     mainLight.position.set(4, 6, 5)
     mainLight.castShadow = true
-    mainLight.shadow.mapSize.width = 1024
-    mainLight.shadow.mapSize.height = 1024
     scene.add(mainLight)
 
-    const fillLight = new THREE.DirectionalLight(0xffb7c5, 0.6)
-    fillLight.position.set(-4, 3, -2)
-    scene.add(fillLight)
-
-    const rimLight = new THREE.PointLight(0x7ee8fa, 0.8, 10)
-    rimLight.position.set(0, 4, -3)
+    const rimLight = new THREE.PointLight(0xffb7c5, 1.0, 10)
+    rimLight.position.set(-3, 4, -2)
     scene.add(rimLight)
 
+    const fillLight = new THREE.PointLight(0x7ee8fa, 0.6, 10)
+    fillLight.position.set(3, 2, 2)
+    scene.add(fillLight)
+
     // ==========================================
-    // BUILD CUTE CHUBBY CHILD CHARACTER ("MOCHI")
+    // BUILD CUTE 3D CHUBBY GIRL WITH LONG HAIR
     // ==========================================
     const characterGroup = new THREE.Group()
     characterGroupRef.current = characterGroup
@@ -60,240 +58,359 @@ export function useThreeJS(containerRef) {
 
     // Materials
     const skinMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffe5d9,
-      roughness: 0.4,
+      color: 0xffedd8, // Warm porcelain skin
+      roughness: 0.35,
       metalness: 0.05
     })
 
-    const hoodieMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffb7c5, // Cute Sakura Pink
+    const hairMaterial = new THREE.MeshStandardMaterial({
+      color: 0x4a2e2b, // Warm chocolate brown
       roughness: 0.5,
       metalness: 0.1
     })
 
-    const overallsMaterial = new THREE.MeshStandardMaterial({
-      color: 0x7ee8fa, // Pastel Blue
-      roughness: 0.5
+    const dressMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffb7c5, // Sakura Pink Dress
+      roughness: 0.4
+    })
+
+    const dressTrimMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.3
+    })
+
+    const ribbonMaterial = new THREE.MeshStandardMaterial({
+      color: 0xff85a2,
+      roughness: 0.3,
+      metalness: 0.2
     })
 
     const blushMaterial = new THREE.MeshStandardMaterial({
       color: 0xff85a2,
       roughness: 0.6,
       transparent: true,
-      opacity: 0.75
+      opacity: 0.65
     })
 
     const eyeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1e1424,
+      color: 0x1a1224,
       roughness: 0.1
     })
 
-    const eyeHighlightMaterial = new THREE.MeshBasicMaterial({
+    const eyeSparkleMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff
     })
 
     const goldMaterial = new THREE.MeshStandardMaterial({
       color: 0xffdf7d,
       roughness: 0.2,
-      metalness: 0.6
+      metalness: 0.5
     })
 
-    // 1. CHUBBY BODY (Torso + Overalls)
+    // 1. CUTE DRESS & CHUBBY BODY
     const bodyGroup = new THREE.Group()
     characterGroup.add(bodyGroup)
 
-    // Chubby belly
-    const torsoGeo = new THREE.SphereGeometry(0.75, 32, 32)
-    torsoGeo.scale(1, 0.9, 0.95)
-    const torso = new THREE.Mesh(torsoGeo, hoodieMaterial)
-    torso.position.y = -0.3
-    torso.castShadow = true
+    // Cute A-line Dress Skirt
+    const skirtGeo = new THREE.CylinderGeometry(0.35, 0.85, 0.75, 32)
+    const skirt = new THREE.Mesh(skirtGeo, dressMaterial)
+    skirt.position.y = -0.45
+    skirt.castShadow = true
+    bodyGroup.add(skirt)
+
+    // White Lace Trim at bottom of skirt
+    const laceGeo = new THREE.TorusGeometry(0.85, 0.04, 16, 32)
+    const lace = new THREE.Mesh(laceGeo, dressTrimMaterial)
+    lace.rotation.x = Math.PI / 2
+    lace.position.y = -0.8
+    bodyGroup.add(lace)
+
+    // Upper Torso
+    const torsoGeo = new THREE.SphereGeometry(0.55, 24, 24)
+    torsoGeo.scale(0.9, 1, 0.85)
+    const torso = new THREE.Mesh(torsoGeo, dressMaterial)
+    torso.position.y = -0.15
     bodyGroup.add(torso)
 
-    // Overall Straps
-    const strapGeo = new THREE.BoxGeometry(0.12, 0.65, 0.08)
-    const leftStrap = new THREE.Mesh(strapGeo, overallsMaterial)
-    leftStrap.position.set(-0.28, -0.05, 0.62)
-    leftStrap.rotation.z = -0.15
-    bodyGroup.add(leftStrap)
+    // Cute Collar
+    const collarGeo = new THREE.TorusGeometry(0.32, 0.05, 12, 24)
+    const collar = new THREE.Mesh(collarGeo, dressTrimMaterial)
+    collar.rotation.x = Math.PI / 2 + 0.2
+    collar.position.set(0, 0.12, 0.1)
+    bodyGroup.add(collar)
 
-    const rightStrap = new THREE.Mesh(strapGeo, overallsMaterial)
-    rightStrap.position.set(0.28, -0.05, 0.62)
-    rightStrap.rotation.z = 0.15
-    bodyGroup.add(rightStrap)
+    // Cute Ribbon Bow on Dress
+    const bowGeo = new THREE.SphereGeometry(0.12, 16, 16)
+    bowGeo.scale(1.4, 0.7, 0.5)
+    const bowLeft = new THREE.Mesh(bowGeo, ribbonMaterial)
+    bowLeft.position.set(-0.1, 0.05, 0.42)
+    bowLeft.rotation.z = -0.3
+    bodyGroup.add(bowLeft)
 
-    // Cute Buttons on Straps
-    const buttonGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.04, 16)
-    buttonGeo.rotateX(Math.PI / 2)
-    const leftBtn = new THREE.Mesh(buttonGeo, goldMaterial)
-    leftBtn.position.set(-0.25, -0.28, 0.67)
-    bodyGroup.add(leftBtn)
+    const bowRight = new THREE.Mesh(bowGeo, ribbonMaterial)
+    bowRight.position.set(0.1, 0.05, 0.42)
+    bowRight.rotation.z = 0.3
+    bodyGroup.add(bowRight)
 
-    const rightBtn = new THREE.Mesh(buttonGeo, goldMaterial)
-    rightBtn.position.set(0.25, -0.28, 0.67)
-    bodyGroup.add(rightBtn)
+    const bowKnot = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), goldMaterial)
+    bowKnot.position.set(0, 0.05, 0.45)
+    bodyGroup.add(bowKnot)
 
     // 2. CHUBBY LEGS & BOOTS
-    const legGeo = new THREE.SphereGeometry(0.26, 24, 24)
-    legGeo.scale(0.9, 1.2, 0.9)
+    const legGeo = new THREE.CylinderGeometry(0.12, 0.11, 0.4, 16)
 
-    const bootMaterial = new THREE.MeshStandardMaterial({ color: 0x5c3d2e, roughness: 0.6 })
-
-    const leftLeg = new THREE.Mesh(legGeo, bootMaterial)
-    leftLeg.position.set(-0.32, -0.9, 0.05)
-    leftLeg.castShadow = true
+    const leftLeg = new THREE.Mesh(legGeo, skinMaterial)
+    leftLeg.position.set(-0.25, -0.9, 0)
     bodyGroup.add(leftLeg)
 
-    const rightLeg = new THREE.Mesh(legGeo, bootMaterial)
-    rightLeg.position.set(0.32, -0.9, 0.05)
-    rightLeg.castShadow = true
+    const rightLeg = new THREE.Mesh(legGeo, skinMaterial)
+    rightLeg.position.set(0.25, -0.9, 0)
     bodyGroup.add(rightLeg)
 
-    // 3. CHUBBY ARMS
-    const armGeo = new THREE.SphereGeometry(0.22, 24, 24)
-    armGeo.scale(0.8, 1.4, 0.8)
+    // Cute Pink Boots
+    const bootGeo = new THREE.SphereGeometry(0.18, 20, 20)
+    bootGeo.scale(0.9, 0.8, 1.2)
 
+    const leftBoot = new THREE.Mesh(bootGeo, ribbonMaterial)
+    leftBoot.position.set(-0.25, -1.15, 0.05)
+    leftBoot.castShadow = true
+    bodyGroup.add(leftBoot)
+
+    const rightBoot = new THREE.Mesh(bootGeo, ribbonMaterial)
+    rightBoot.position.set(0.25, -1.15, 0.05)
+    rightBoot.castShadow = true
+    bodyGroup.add(rightBoot)
+
+    // 3. CHUBBY ARMS & PUFFED SLEEVES
+    const sleeveGeo = new THREE.SphereGeometry(0.22, 20, 20)
+    
+    // Left Arm Group
     const leftArmGroup = new THREE.Group()
-    leftArmGroup.position.set(-0.75, -0.15, 0)
+    leftArmGroup.position.set(-0.62, 0.05, 0)
     bodyGroup.add(leftArmGroup)
-    const leftArm = new THREE.Mesh(armGeo, hoodieMaterial)
-    leftArm.position.y = -0.2
-    leftArmGroup.add(leftArm)
     leftArmRef.current = leftArmGroup
 
-    const rightArmGroup = new THREE.Group()
-    rightArmGroup.position.set(0.75, -0.15, 0)
-    bodyGroup.add(rightArmGroup)
-    const rightArm = new THREE.Mesh(armGeo, hoodieMaterial)
-    rightArm.position.y = -0.2
-    rightArmGroup.add(rightArm)
-    rightArmRef.current = rightArmGroup
+    const leftSleeve = new THREE.Mesh(sleeveGeo, dressMaterial)
+    leftArmGroup.add(leftSleeve)
 
-    // Chubby Little Hands
-    const handGeo = new THREE.SphereGeometry(0.14, 16, 16)
+    const armGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.45, 16)
+    const leftArm = new THREE.Mesh(armGeo, skinMaterial)
+    leftArm.position.set(-0.08, -0.22, 0)
+    leftArm.rotation.z = 0.3
+    leftArmGroup.add(leftArm)
+
+    const handGeo = new THREE.SphereGeometry(0.11, 16, 16)
     const leftHand = new THREE.Mesh(handGeo, skinMaterial)
-    leftHand.position.set(0, -0.42, 0)
+    leftHand.position.set(-0.16, -0.42, 0)
     leftArmGroup.add(leftHand)
 
+    // Right Arm Group (Waving)
+    const rightArmGroup = new THREE.Group()
+    rightArmGroup.position.set(0.62, 0.05, 0)
+    bodyGroup.add(rightArmGroup)
+    rightArmRef.current = rightArmGroup
+
+    const rightSleeve = new THREE.Mesh(sleeveGeo, dressMaterial)
+    rightArmGroup.add(rightSleeve)
+
+    const rightArm = new THREE.Mesh(armGeo, skinMaterial)
+    rightArm.position.set(0.08, -0.22, 0)
+    rightArm.rotation.z = -0.3
+    rightArmGroup.add(rightArm)
+
     const rightHand = new THREE.Mesh(handGeo, skinMaterial)
-    rightHand.position.set(0, -0.42, 0)
+    rightHand.position.set(0.16, -0.42, 0)
     rightArmGroup.add(rightHand)
 
-    // 4. CUTE CHUBBY HEAD
+    // 4. CUTE CHUBBY GIRL HEAD & LONG HAIR
     const headGroup = new THREE.Group()
-    headGroup.position.y = 0.55
+    headGroup.position.y = 0.58
     characterGroup.add(headGroup)
     headGroupRef.current = headGroup
 
-    // Chubby round head
-    const headGeo = new THREE.SphereGeometry(0.88, 36, 36)
-    headGeo.scale(1.05, 0.96, 1)
+    // Chubby Round Face
+    const headGeo = new THREE.SphereGeometry(0.82, 36, 36)
+    headGeo.scale(1.05, 0.95, 0.98)
     const head = new THREE.Mesh(headGeo, skinMaterial)
     head.castShadow = true
     headGroup.add(head)
 
-    // Cute Chubby Cheeks (Rosy Blush)
-    const blushGeo = new THREE.SphereGeometry(0.2, 20, 20)
-    blushGeo.scale(1.2, 0.6, 0.4)
+    // Cute Human Ears
+    const earGeo = new THREE.SphereGeometry(0.14, 16, 16)
+    earGeo.scale(0.6, 1, 0.8)
+
+    const leftEar = new THREE.Mesh(earGeo, skinMaterial)
+    leftEar.position.set(-0.84, -0.05, 0)
+    headGroup.add(leftEar)
+
+    const rightEar = new THREE.Mesh(earGeo, skinMaterial)
+    rightEar.position.set(0.84, -0.05, 0)
+    headGroup.add(rightEar)
+
+    // Cute Cheeks (Rosy Blush)
+    const blushGeo = new THREE.SphereGeometry(0.18, 16, 16)
+    blushGeo.scale(1.3, 0.5, 0.3)
 
     const leftBlush = new THREE.Mesh(blushGeo, blushMaterial)
-    leftBlush.position.set(-0.48, -0.18, 0.72)
+    leftBlush.position.set(-0.42, -0.16, 0.72)
     leftBlush.rotation.y = -0.3
     headGroup.add(leftBlush)
 
     const rightBlush = new THREE.Mesh(blushGeo, blushMaterial)
-    rightBlush.position.set(0.48, -0.18, 0.72)
+    rightBlush.position.set(0.42, -0.16, 0.72)
     rightBlush.rotation.y = 0.3
     headGroup.add(rightBlush)
 
-    // Cute Eyes
-    const eyeGeo = new THREE.SphereGeometry(0.12, 20, 20)
-    eyeGeo.scale(0.85, 1.15, 0.5)
+    // Big Anime Eyes
+    const eyeGeo = new THREE.SphereGeometry(0.13, 20, 20)
+    eyeGeo.scale(0.85, 1.2, 0.4)
 
     const leftEye = new THREE.Mesh(eyeGeo, eyeMaterial)
-    leftEye.position.set(-0.3, 0.06, 0.8)
+    leftEye.position.set(-0.28, 0.06, 0.78)
     headGroup.add(leftEye)
 
     const rightEye = new THREE.Mesh(eyeGeo, eyeMaterial)
-    rightEye.position.set(0.3, 0.06, 0.8)
+    rightEye.position.set(0.3, 0.06, 0.78)
     headGroup.add(rightEye)
 
-    // Eye Highlights (Catchlights)
-    const highlightGeo = new THREE.SphereGeometry(0.04, 12, 12)
-    const leftHL = new THREE.Mesh(highlightGeo, eyeHighlightMaterial)
-    leftHL.position.set(-0.27, 0.1, 0.86)
-    headGroup.add(leftHL)
+    // Eye Sparkles / Catchlights
+    const mainSparkleGeo = new THREE.SphereGeometry(0.045, 12, 12)
+    const subSparkleGeo = new THREE.SphereGeometry(0.025, 12, 12)
 
-    const rightHL = new THREE.Mesh(highlightGeo, eyeHighlightMaterial)
-    rightHL.position.set(0.33, 0.1, 0.86)
-    headGroup.add(rightHL)
+    const leftSparkle1 = new THREE.Mesh(mainSparkleGeo, eyeSparkleMaterial)
+    leftSparkle1.position.set(-0.25, 0.1, 0.83)
+    headGroup.add(leftSparkle1)
 
-    // Cute Mouth (Smiling Arc)
-    const mouthGeo = new THREE.TorusGeometry(0.08, 0.025, 12, 24, Math.PI)
+    const leftSparkle2 = new THREE.Mesh(subSparkleGeo, eyeSparkleMaterial)
+    leftSparkle2.position.set(-0.31, 0.02, 0.83)
+    headGroup.add(leftSparkle2)
+
+    const rightSparkle1 = new THREE.Mesh(mainSparkleGeo, eyeSparkleMaterial)
+    rightSparkle1.position.set(0.33, 0.1, 0.83)
+    headGroup.add(rightSparkle1)
+
+    const rightSparkle2 = new THREE.Mesh(subSparkleGeo, eyeSparkleMaterial)
+    rightSparkle2.position.set(0.27, 0.02, 0.83)
+    headGroup.add(rightSparkle2)
+
+    // Cute Eyelashes
+    const lashGeo = new THREE.TorusGeometry(0.14, 0.02, 8, 16, Math.PI / 2)
+    const leftLash = new THREE.Mesh(lashGeo, eyeMaterial)
+    leftLash.position.set(-0.28, 0.2, 0.78)
+    leftLash.rotation.z = -0.3
+    headGroup.add(leftLash)
+
+    const rightLash = new THREE.Mesh(lashGeo, eyeMaterial)
+    rightLash.position.set(0.3, 0.2, 0.78)
+    rightLash.rotation.z = Math.PI - 0.3
+    headGroup.add(rightLash)
+
+    // Cute Smile
+    const mouthGeo = new THREE.TorusGeometry(0.07, 0.02, 12, 20, Math.PI)
     const mouthMat = new THREE.MeshBasicMaterial({ color: 0xd85a7f })
     const mouth = new THREE.Mesh(mouthGeo, mouthMat)
-    mouth.position.set(0, -0.22, 0.83)
+    mouth.position.set(0, -0.22, 0.81)
     mouth.rotation.x = Math.PI
     headGroup.add(mouth)
 
-    // Cute Bear / Animal Hoodie Ears on Top
-    const earGeo = new THREE.SphereGeometry(0.24, 24, 24)
-    const innerEarMat = new THREE.MeshStandardMaterial({ color: 0xff85a2, roughness: 0.4 })
+    // 5. LONG FLOWING HAIR & BANGS
+    const hairGroup = new THREE.Group()
+    headGroup.add(hairGroup)
+    hairGroupRef.current = hairGroup
 
-    const leftEar = new THREE.Mesh(earGeo, hoodieMaterial)
-    leftEar.position.set(-0.62, 0.78, 0)
-    headGroup.add(leftEar)
+    // Front Hair Bangs
+    const bangGeo = new THREE.SphereGeometry(0.22, 16, 16)
+    bangGeo.scale(1.2, 0.9, 0.6)
 
-    const leftInnerEar = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), innerEarMat)
-    leftInnerEar.position.set(-0.62, 0.78, 0.1)
-    headGroup.add(leftInnerEar)
+    const bang1 = new THREE.Mesh(bangGeo, hairMaterial)
+    bang1.position.set(-0.25, 0.52, 0.72)
+    bang1.rotation.z = -0.2
+    hairGroup.add(bang1)
 
-    const rightEar = new THREE.Mesh(earGeo, hoodieMaterial)
-    rightEar.position.set(0.62, 0.78, 0)
-    headGroup.add(rightEar)
+    const bang2 = new THREE.Mesh(bangGeo, hairMaterial)
+    bang2.position.set(0.25, 0.52, 0.72)
+    bang2.rotation.z = 0.2
+    hairGroup.add(bang2)
 
-    const rightInnerEar = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), innerEarMat)
-    rightInnerEar.position.set(0.62, 0.78, 0.1)
-    headGroup.add(rightInnerEar)
+    const centerBang = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), hairMaterial)
+    centerBang.position.set(0, 0.55, 0.78)
+    hairGroup.add(centerBang)
 
-    // Sprouts 🌱 on top of head
-    const sproutStemGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.2, 8)
-    const sproutStem = new THREE.Mesh(sproutStemGeo, new THREE.MeshStandardMaterial({ color: 0x88b04b }))
-    sproutStem.position.set(0, 0.95, 0)
-    headGroup.add(sproutStem)
+    // Main Hair Cap
+    const capGeo = new THREE.SphereGeometry(0.89, 32, 32)
+    const hairCap = new THREE.Mesh(capGeo, hairMaterial)
+    hairCap.position.set(0, 0.08, -0.05)
+    hairGroup.add(hairCap)
 
-    const leafGeo = new THREE.SphereGeometry(0.1, 12, 12)
-    leafGeo.scale(1.4, 0.3, 0.7)
-    const leaf = new THREE.Mesh(leafGeo, new THREE.MeshStandardMaterial({ color: 0x88b04b }))
-    leaf.position.set(0.08, 1.04, 0)
-    leaf.rotation.z = -0.4
-    headGroup.add(leaf)
+    // LONG TWIN TAILS / LONG HAIR LOCKS
+    const longHairGeo = new THREE.CylinderGeometry(0.25, 0.08, 1.8, 24)
+    longHairGeo.scale(1, 1, 0.7)
 
-    // 5. GROUND SHADOW DISC
-    const shadowGeo = new THREE.PlaneGeometry(1.8, 1.8)
+    // Left Long Hair Strand
+    const leftLongHair = new THREE.Mesh(longHairGeo, hairMaterial)
+    leftLongHair.position.set(-0.72, -0.4, -0.1)
+    leftLongHair.rotation.z = 0.25
+    leftLongHair.rotation.x = 0.1
+    hairGroup.add(leftLongHair)
+
+    // Right Long Hair Strand
+    const rightLongHair = new THREE.Mesh(longHairGeo, hairMaterial)
+    rightLongHair.position.set(0.72, -0.4, -0.1)
+    rightLongHair.rotation.z = -0.25
+    rightLongHair.rotation.x = 0.1
+    hairGroup.add(rightLongHair)
+
+    // Back Hair Cascade
+    const backHairGeo = new THREE.SphereGeometry(0.7, 24, 24)
+    backHairGeo.scale(1.2, 1.8, 0.6)
+    const backHair = new THREE.Mesh(backHairGeo, hairMaterial)
+    backHair.position.set(0, -0.4, -0.45)
+    hairGroup.add(backHair)
+
+    // Cute Flower Hair Clip 🌸
+    const flowerCenter = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), goldMaterial)
+    flowerCenter.position.set(-0.55, 0.55, 0.65)
+    hairGroup.add(flowerCenter)
+
+    const petalGeo = new THREE.SphereGeometry(0.06, 12, 12)
+    petalGeo.scale(1, 0.5, 1)
+
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2
+      const petal = new THREE.Mesh(petalGeo, dressTrimMaterial)
+      petal.position.set(-0.55 + Math.cos(angle) * 0.1, 0.55 + Math.sin(angle) * 0.1, 0.64)
+      hairGroup.add(petal)
+    }
+
+    // 6. GROUND SHADOW
+    const shadowGeo = new THREE.PlaneGeometry(1.6, 1.6)
     const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x000000,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.2,
       depthWrite: false
     })
     const shadow = new THREE.Mesh(shadowGeo, shadowMat)
     shadow.rotation.x = -Math.PI / 2
-    shadow.position.y = -1.25
+    shadow.position.y = -1.35
     characterGroup.add(shadow)
 
-    // FLOATING PARTICLES (Sakura Hearts)
-    const heartGroup = new THREE.Group()
-    characterGroup.add(heartGroup)
+    // FLOATING SAKURA PETALS & SPARKLES
+    const sparklesGroup = new THREE.Group()
+    characterGroup.add(sparklesGroup)
 
-    const heartGeo = new THREE.SphereGeometry(0.08, 12, 12)
-    const heartMat = new THREE.MeshStandardMaterial({ color: 0xff85a2, emissive: 0xff85a2, emissiveIntensity: 0.4 })
+    const sparkleGeo = new THREE.OctahedronGeometry(0.08, 0)
+    const sparkleMat = new THREE.MeshStandardMaterial({
+      color: 0xffdf7d,
+      emissive: 0xffdf7d,
+      emissiveIntensity: 0.6
+    })
 
-    for (let i = 0; i < 4; i++) {
-      const pHeart = new THREE.Mesh(heartGeo, heartMat)
-      const angle = (i / 4) * Math.PI * 2
-      pHeart.position.set(Math.cos(angle) * 1.3, 0.2 + (i % 2) * 0.4, Math.sin(angle) * 1.3)
-      heartGroup.add(pHeart)
+    for (let i = 0; i < 5; i++) {
+      const sp = new THREE.Mesh(sparkleGeo, sparkleMat)
+      const angle = (i / 5) * Math.PI * 2
+      sp.position.set(Math.cos(angle) * 1.35, -0.2 + (i % 3) * 0.5, Math.sin(angle) * 1.35)
+      sparklesGroup.add(sp)
     }
 
     // ==========================================
@@ -305,8 +422,8 @@ export function useThreeJS(containerRef) {
       const rect = containerRef.current.getBoundingClientRect()
       const x = ((event.clientX - rect.left) / rect.width) * 2 - 1
       const y = -((event.clientY - rect.top) / rect.height) * 2 + 1
-      mouse.targetX = x * 0.4
-      mouse.targetY = y * 0.3
+      mouse.targetX = x * 0.38
+      mouse.targetY = y * 0.28
     }
 
     window.addEventListener('mousemove', handleMouseMove)
@@ -327,20 +444,26 @@ export function useThreeJS(containerRef) {
         headGroupRef.current.rotation.x = -mouse.y
       }
 
+      // Gentle hair swaying
+      if (leftLongHair && rightLongHair) {
+        leftLongHair.rotation.z = 0.25 + Math.sin(elapsedTime * 2) * 0.06
+        rightLongHair.rotation.z = -0.25 - Math.sin(elapsedTime * 2) * 0.06
+      }
+
       // Idle floating breathing animation
       if (characterGroupRef.current) {
-        characterGroupRef.current.position.y = Math.sin(elapsedTime * 2.2) * 0.08
+        characterGroupRef.current.position.y = Math.sin(elapsedTime * 2.2) * 0.07
       }
 
-      // Arm waving & breathing movement
+      // Arm waving & cute movement
       if (leftArmRef.current && rightArmRef.current) {
-        leftArmRef.current.rotation.z = Math.sin(elapsedTime * 2.5) * 0.12 - 0.2
-        rightArmRef.current.rotation.z = -Math.sin(elapsedTime * 2.5) * 0.12 + 0.2
-        rightArmRef.current.rotation.x = Math.sin(elapsedTime * 3.5) * 0.2 + 0.2 // Cute wave
+        leftArmRef.current.rotation.z = Math.sin(elapsedTime * 2) * 0.08 - 0.1
+        rightArmRef.current.rotation.z = -Math.sin(elapsedTime * 3) * 0.18 + 0.2
+        rightArmRef.current.rotation.x = Math.sin(elapsedTime * 4) * 0.15 + 0.1
       }
 
-      // Rotate floating hearts
-      heartGroup.rotation.y = elapsedTime * 0.6
+      // Rotate sparkles
+      sparklesGroup.rotation.y = elapsedTime * 0.5
 
       renderer.render(scene, camera)
     }
