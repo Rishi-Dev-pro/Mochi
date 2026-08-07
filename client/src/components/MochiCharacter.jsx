@@ -13,7 +13,7 @@ export default function MochiCharacter() {
         position: 'absolute',
         bottom: '14px',
         right: '14px',
-        background: 'rgba(24, 16, 28, 0.82)',
+        background: 'rgba(24, 16, 28, 0.85)',
         backdropFilter: 'blur(10px)',
         border: '1px solid var(--mc-sakura-glow)',
         borderRadius: '20px',
@@ -26,7 +26,7 @@ export default function MochiCharacter() {
         fontFamily: "'Minecraftia', monospace",
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
       }}>
-        <span>🌱 Chubby Mochi 3D</span>
+        <span>🌸 Mochi 3D Girl</span>
       </div>
     </div>
   )
