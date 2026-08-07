@@ -1,16 +1,13 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm'
 import { useEmotionStore } from '../store/emotionStore'
 
 export function useThreeJS(containerRef) {
   const sceneRef = useRef(null)
   const rendererRef = useRef(null)
-  const avatarGroupRef = useRef(null)
-  const headNodeRef = useRef(null)
-  const rightArmBoneRef = useRef(null)
-  const leftArmBoneRef = useRef(null)
-  const morphMeshesRef = useRef([])
+  const vrmRef = useRef(null)
 
   // Particle & FX Groups
   const tearsGroupRef = useRef(null)
@@ -29,8 +26,8 @@ export function useThreeJS(containerRef) {
 
     const width = containerRef.current.clientWidth
     const height = containerRef.current.clientHeight
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000)
-    camera.position.set(0, 0.15, 2.3) // Perfect bust framing
+    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000)
+    camera.position.set(0, 0.6, 2.2) // Framing bust & head of VRM avatar
 
     // 2. RENDERER SETUP
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -42,11 +39,11 @@ export function useThreeJS(containerRef) {
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
-    // 3. STUDIO LIGHTING
-    const ambientLight = new THREE.AmbientLight(0xfff6f8, 1.2)
+    // 3. SOFT STUDIO LIGHTING
+    const ambientLight = new THREE.AmbientLight(0xfff6f8, 1.4)
     scene.add(ambientLight)
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.6)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.8)
     keyLight.position.set(3, 4, 3.5)
     keyLight.castShadow = true
     keyLight.shadow.mapSize.width = 2048
@@ -61,44 +58,37 @@ export function useThreeJS(containerRef) {
     fillLight.position.set(2.5, 1, 2)
     scene.add(fillLight)
 
-    // Avatar Root Container
-    const avatarGroup = new THREE.Group()
-    avatarGroupRef.current = avatarGroup
-    scene.add(avatarGroup)
-
-    // 4. LOAD REAL 3D FEMALE AVATAR GLB MODEL
+    // 4. LOAD CUTE VRM ANIME GIRL AVATAR
     const loader = new GLTFLoader()
-    const modelUrl = '/models/avatar_female.glb'
+    loader.register((parser) => new VRMLoaderPlugin(parser))
+
+    const modelUrl = '/models/vrm_sample.vrm'
 
     loader.load(
       modelUrl,
       (gltf) => {
-        const model = gltf.scene
-        model.scale.set(1.5, 1.5, 1.5)
-        model.position.set(0, -1.82, 0)
-        avatarGroup.add(model)
+        const vrm = gltf.userData.vrm
+        if (!vrm) return
 
-        // Traversal for Bones, Meshes & Morph Targets
-        const morphMeshes = []
-        model.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true
-            child.receiveShadow = true
-            if (child.morphTargetDictionary && child.morphTargetInfluences) {
-              morphMeshes.push(child)
-            }
-          }
-          if (child.isBone) {
-            if (child.name === 'Head') headNodeRef.current = child
-            if (child.name === 'RightArm') rightArmBoneRef.current = child
-            if (child.name === 'LeftArm') leftArmBoneRef.current = child
+        // Rotate & position avatar
+        VRMUtils.rotateVRM0(vrm)
+        vrm.scene.position.set(0, -0.65, 0)
+        vrm.scene.scale.set(1.4, 1.4, 1.4)
+        
+        // Enable shadows
+        vrm.scene.traverse((obj) => {
+          if (obj.isMesh) {
+            obj.castShadow = true
+            obj.receiveShadow = true
           }
         })
-        morphMeshesRef.current = morphMeshes
+
+        scene.add(vrm.scene)
+        vrmRef.current = vrm
       },
       undefined,
       (err) => {
-        console.error('Error loading 3D female avatar GLB:', err)
+        console.error('Error loading VRM model:', err)
       }
     )
 
@@ -116,11 +106,11 @@ export function useThreeJS(containerRef) {
     const tearMat = new THREE.MeshBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.85 })
 
     const leftTear = new THREE.Mesh(tearGeo, tearMat)
-    leftTear.position.set(-0.08, 0.28, 0.5)
+    leftTear.position.set(-0.08, 0.72, 0.5)
     tearsGroup.add(leftTear)
 
     const rightTear = new THREE.Mesh(tearGeo, tearMat)
-    rightTear.position.set(0.08, 0.28, 0.5)
+    rightTear.position.set(0.08, 0.72, 0.5)
     tearsGroup.add(rightTear)
     tearsGroup.visible = false
 
@@ -135,7 +125,7 @@ export function useThreeJS(containerRef) {
     for (let i = 0; i < 6; i++) {
       const ember = new THREE.Mesh(emberGeo, emberMat)
       const angle = (i / 6) * Math.PI * 2
-      ember.position.set(Math.cos(angle) * 0.45, 0.3 + (i % 3) * 0.08, Math.sin(angle) * 0.45)
+      ember.position.set(Math.cos(angle) * 0.45, 0.7 + (i % 3) * 0.08, Math.sin(angle) * 0.45)
       angryEmberGroup.add(ember)
     }
     angryEmberGroup.visible = false
@@ -149,7 +139,7 @@ export function useThreeJS(containerRef) {
 
     for (let i = 0; i < 3; i++) {
       const wave = new THREE.Mesh(new THREE.TorusGeometry(0.08 + i * 0.05, 0.008, 12, 24), waveMat)
-      wave.position.set(0, 0.15, 0.5 + i * 0.1)
+      wave.position.set(0, 0.62, 0.5 + i * 0.1)
       shoutWaveGroup.add(wave)
     }
     shoutWaveGroup.visible = false
@@ -162,7 +152,7 @@ export function useThreeJS(containerRef) {
     const zMat = new THREE.MeshBasicMaterial({ color: 0xa78bfa })
     for (let i = 0; i < 3; i++) {
       const zMesh = new THREE.Mesh(new THREE.BoxGeometry(0.05 - i * 0.01, 0.012, 0.012), zMat)
-      zMesh.position.set(0.2 + i * 0.06, 0.4 + i * 0.1, 0.3)
+      zMesh.position.set(0.2 + i * 0.06, 0.8 + i * 0.1, 0.3)
       zzzGroup.add(zMesh)
     }
     zzzGroup.visible = false
@@ -176,7 +166,7 @@ export function useThreeJS(containerRef) {
     for (let i = 0; i < 5; i++) {
       const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.025), starMat)
       const angle = (i / 5) * Math.PI * 2
-      star.position.set(Math.cos(angle) * 0.3, 0.6 + (i % 2) * 0.05, Math.sin(angle) * 0.2)
+      star.position.set(Math.cos(angle) * 0.3, 1.05 + (i % 2) * 0.05, Math.sin(angle) * 0.2)
       surpriseGroup.add(star)
     }
     surpriseGroup.visible = false
@@ -186,40 +176,20 @@ export function useThreeJS(containerRef) {
       new THREE.TorusGeometry(0.04, 0.012, 12, 20, Math.PI * 1.5),
       new THREE.MeshBasicMaterial({ color: 0xeab308 })
     )
-    confusedMark.position.set(0.22, 0.55, 0.2)
+    confusedMark.position.set(0.22, 1.0, 0.2)
     confusedMarkRef.current = confusedMark
     confusedMark.visible = false
     scene.add(confusedMark)
 
-    // Helper: Set Morph Target Influence across all sub-meshes
-    const setMorph = (targetName, value) => {
-      morphMeshesRef.current.forEach((mesh) => {
-        const index = mesh.morphTargetDictionary[targetName]
-        if (index !== undefined) {
-          mesh.morphTargetInfluences[index] = THREE.MathUtils.lerp(
-            mesh.morphTargetInfluences[index] || 0,
-            value,
-            0.2
-          )
-        }
-      })
-    }
-
-    // Helper: Reset all morph targets to 0
-    const resetMorphs = () => {
-      const allTargets = [
-        'mouthSmile', 'mouthSmileLeft', 'mouthSmileRight', 'tongueOut',
-        'viseme_aa', 'viseme_O', 'jawOpen', 'mouthOpen', 'browDownLeft',
-        'browDownRight', 'browInnerUp', 'browOuterUpLeft', 'browOuterUpRight',
-        'eyeBlinkLeft', 'eyeBlinkRight', 'eyeWideLeft', 'eyeWideRight',
-        'eyeSquintLeft', 'eyeSquintRight', 'mouthFrownLeft', 'mouthFrownRight',
-        'noseSneerLeft', 'noseSneerRight', 'jawLeft', 'mouthDimpleRight', 'mouthPucker'
-      ]
-      allTargets.forEach((name) => setMorph(name, 0))
+    // Helper: Reset VRM Expression Values
+    const resetVRMExpressions = (vrm) => {
+      if (!vrm || !vrm.expressionManager) return
+      const presetNames = ['happy', 'angry', 'sad', 'surprised', 'aa', 'ee', 'ih', 'oh', 'ou', 'relaxed', 'neutral', 'blink', 'blinkLeft', 'blinkRight']
+      presetNames.forEach((name) => vrm.expressionManager.setValue(name, 0))
     }
 
     // ========================================================
-    // 6. DYNAMIC ANIMATION & EMOTION ENGINE
+    // 6. DYNAMIC ANIMATION & EMOTION LOOP
     // ========================================================
     const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 }
 
@@ -239,21 +209,22 @@ export function useThreeJS(containerRef) {
 
     const animate = () => {
       animationId = requestAnimationFrame(animate)
+      const delta = clock.getDelta()
       const elapsedTime = clock.getElapsedTime()
 
-      // Read active emotion
+      const vrm = vrmRef.current
       const activeEmotion = useEmotionStore.getState().currentEmotion?.type || 'neutral'
 
       // Smooth Head Tracking
       mouse.x += (mouse.targetX - mouse.x) * 0.08
       mouse.y += (mouse.targetY - mouse.y) * 0.08
 
-      if (headNodeRef.current) {
-        headNodeRef.current.rotation.y = mouse.x
-        headNodeRef.current.rotation.x = -mouse.y
-      } else if (avatarGroupRef.current) {
-        avatarGroupRef.current.rotation.y = mouse.x * 0.6
-        avatarGroupRef.current.rotation.x = -mouse.y * 0.4
+      if (vrm && vrm.humanoid) {
+        const headNode = vrm.humanoid.getNormalizedBoneNode('head')
+        if (headNode) {
+          headNode.rotation.y = mouse.x
+          headNode.rotation.x = -mouse.y
+        }
       }
 
       // Hide all FX by default
@@ -264,156 +235,120 @@ export function useThreeJS(containerRef) {
       if (surpriseGroupRef.current) surpriseGroupRef.current.visible = false
       if (confusedMarkRef.current) confusedMarkRef.current.visible = false
 
-      resetMorphs()
+      if (vrm && vrm.expressionManager) {
+        resetVRMExpressions(vrm)
 
-      // Natural Eye Blink Cycle
-      const isBlinking = (elapsedTime - lastBlink > 3.8) && (elapsedTime - lastBlink < 4.0)
-      if (elapsedTime - lastBlink > 4.0) lastBlink = elapsedTime
+        // Natural Eye Blink Cycle
+        const isBlinking = (elapsedTime - lastBlink > 3.5) && (elapsedTime - lastBlink < 3.7)
+        if (elapsedTime - lastBlink > 3.7) lastBlink = elapsedTime
 
-      // --- EMOTION MORPH TARGET MAPPINGS ---
-      switch (activeEmotion) {
-        case 'happy':
-        case 'excited':
-          setMorph('mouthSmile', 0.85)
-          setMorph('cheekSquintLeft', 0.5)
-          setMorph('cheekSquintRight', 0.5)
-          setMorph('browOuterUpLeft', 0.35)
-          setMorph('browOuterUpRight', 0.35)
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.position.y = Math.sin(elapsedTime * 4) * 0.04
-          }
-          break
+        switch (activeEmotion) {
+          case 'happy':
+          case 'excited':
+            vrm.expressionManager.setValue('happy', 1.0)
+            if (vrm.scene) vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 4) * 0.03
+            break
 
-        case 'waving':
-          setMorph('mouthSmile', 0.9)
-          setMorph('browOuterUpLeft', 0.3)
-          setMorph('browOuterUpRight', 0.3)
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.position.y = Math.sin(elapsedTime * 3) * 0.03
-            avatarGroupRef.current.rotation.z = Math.sin(elapsedTime * 4) * 0.05
-          }
-          if (rightArmBoneRef.current) {
-            rightArmBoneRef.current.rotation.z = -1.2 + Math.sin(elapsedTime * 6) * 0.3
-          }
-          break
+          case 'waving':
+            vrm.expressionManager.setValue('happy', 1.0)
+            if (vrm.scene) {
+              vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 3) * 0.02
+              vrm.scene.rotation.z = Math.sin(elapsedTime * 4) * 0.04
+            }
+            if (vrm.humanoid) {
+              const rArm = vrm.humanoid.getNormalizedBoneNode('rightUpperArm')
+              if (rArm) rArm.rotation.z = -1.2 + Math.sin(elapsedTime * 6) * 0.3
+            }
+            break
 
-        case 'teasing':
-          setMorph('tongueOut', 0.95)
-          setMorph('eyeBlinkLeft', 0.95) // Playful Wink!
-          setMorph('mouthSmileRight', 0.7)
-          setMorph('browOuterUpRight', 0.5)
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.rotation.z = Math.sin(elapsedTime * 3) * 0.06
-            avatarGroupRef.current.position.y = Math.sin(elapsedTime * 4) * 0.03
-          }
-          break
+          case 'teasing':
+            vrm.expressionManager.setValue('happy', 0.6)
+            vrm.expressionManager.setValue('blinkLeft', 1.0) // Playful Wink!
+            vrm.expressionManager.setValue('oh', 0.3)
+            if (vrm.scene) {
+              vrm.scene.rotation.z = Math.sin(elapsedTime * 3) * 0.05
+              vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 4) * 0.02
+            }
+            break
 
-        case 'shouting':
-          setMorph('viseme_aa', 1.0)
-          setMorph('jawOpen', 0.85)
-          setMorph('eyeWideLeft', 0.75)
-          setMorph('eyeWideRight', 0.75)
-          setMorph('browDownLeft', 0.6)
-          setMorph('browDownRight', 0.6)
-          if (shoutWaveGroupRef.current) {
-            shoutWaveGroupRef.current.visible = true
-            shoutWaveGroupRef.current.children.forEach((w, idx) => {
-              const s = 1 + ((elapsedTime * 3 + idx * 0.5) % 1.5)
-              w.scale.set(s, s, s)
-            })
-          }
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.position.y = Math.sin(elapsedTime * 15) * 0.02
-          }
-          break
+          case 'shouting':
+            vrm.expressionManager.setValue('aa', 1.0)
+            vrm.expressionManager.setValue('angry', 0.5)
+            if (shoutWaveGroupRef.current) {
+              shoutWaveGroupRef.current.visible = true
+              shoutWaveGroupRef.current.children.forEach((w, idx) => {
+                const s = 1 + ((elapsedTime * 3 + idx * 0.5) % 1.5)
+                w.scale.set(s, s, s)
+              })
+            }
+            if (vrm.scene) vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 15) * 0.02
+            break
 
-        case 'angry':
-          setMorph('browDownLeft', 1.0)
-          setMorph('browDownRight', 1.0)
-          setMorph('mouthFrownLeft', 0.85)
-          setMorph('mouthFrownRight', 0.85)
-          setMorph('noseSneerLeft', 0.7)
-          setMorph('noseSneerRight', 0.7)
-          if (angryEmberGroupRef.current) {
-            angryEmberGroupRef.current.visible = true
-            angryEmberGroupRef.current.rotation.y = elapsedTime * 4
-          }
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.position.y = Math.sin(elapsedTime * 8) * 0.02
-          }
-          break
+          case 'angry':
+            vrm.expressionManager.setValue('angry', 1.0)
+            if (angryEmberGroupRef.current) {
+              angryEmberGroupRef.current.visible = true
+              angryEmberGroupRef.current.rotation.y = elapsedTime * 4
+            }
+            if (vrm.scene) vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 8) * 0.02
+            break
 
-        case 'sad':
-          setMorph('browInnerUp', 1.0)
-          setMorph('mouthFrownLeft', 0.9)
-          setMorph('mouthFrownRight', 0.9)
-          setMorph('eyeSquintLeft', 0.4)
-          setMorph('eyeSquintRight', 0.4)
-          if (tearsGroupRef.current) {
-            tearsGroupRef.current.visible = true
-            tearsGroupRef.current.children.forEach((t, i) => {
-              t.position.y = 0.28 - ((elapsedTime * 1.5 + i * 0.4) % 0.3)
-            })
-          }
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.position.y = -0.04 + Math.sin(elapsedTime * 1.5) * 0.015
-          }
-          break
+          case 'sad':
+            vrm.expressionManager.setValue('sad', 1.0)
+            if (tearsGroupRef.current) {
+              tearsGroupRef.current.visible = true
+              tearsGroupRef.current.children.forEach((t, i) => {
+                t.position.y = 0.72 - ((elapsedTime * 1.5 + i * 0.4) % 0.3)
+              })
+            }
+            if (vrm.scene) vrm.scene.position.y = -0.68 + Math.sin(elapsedTime * 1.5) * 0.015
+            break
 
-        case 'surprised':
-          setMorph('eyeWideLeft', 1.0)
-          setMorph('eyeWideRight', 1.0)
-          setMorph('viseme_O', 0.85)
-          setMorph('browInnerUp', 0.8)
-          if (surpriseGroupRef.current) {
-            surpriseGroupRef.current.visible = true
-            surpriseGroupRef.current.rotation.y = elapsedTime * 2
-          }
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.position.y = 0.04 + Math.sin(elapsedTime * 6) * 0.02
-          }
-          break
+          case 'surprised':
+            vrm.expressionManager.setValue('surprised', 1.0)
+            if (surpriseGroupRef.current) {
+              surpriseGroupRef.current.visible = true
+              surpriseGroupRef.current.rotation.y = elapsedTime * 2
+            }
+            if (vrm.scene) vrm.scene.position.y = -0.62 + Math.sin(elapsedTime * 6) * 0.02
+            break
 
-        case 'confused':
-          setMorph('browOuterUpLeft', 1.0)
-          setMorph('browDownRight', 0.7)
-          setMorph('jawLeft', 0.3)
-          setMorph('mouthDimpleRight', 0.6)
-          if (confusedMarkRef.current) {
-            confusedMarkRef.current.visible = true
-            confusedMarkRef.current.rotation.z = Math.sin(elapsedTime * 4) * 0.2
-          }
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.rotation.z = 0.15
-          }
-          break
+          case 'confused':
+            vrm.expressionManager.setValue('surprised', 0.4)
+            vrm.expressionManager.setValue('ih', 0.4)
+            if (confusedMarkRef.current) {
+              confusedMarkRef.current.visible = true
+              confusedMarkRef.current.rotation.z = Math.sin(elapsedTime * 4) * 0.2
+            }
+            if (vrm.scene) vrm.scene.rotation.z = 0.12
+            break
 
-        case 'sleepy':
-          setMorph('eyeBlinkLeft', 0.85)
-          setMorph('eyeBlinkRight', 0.85)
-          setMorph('mouthPucker', 0.3)
-          if (zzzGroupRef.current) {
-            zzzGroupRef.current.visible = true
-            zzzGroupRef.current.children.forEach((z, i) => {
-              z.position.y = 0.4 + i * 0.1 + Math.sin(elapsedTime * 2 + i) * 0.02
-            })
-          }
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.position.y = Math.sin(elapsedTime * 1.2) * 0.02 - 0.02
-          }
-          break
+          case 'sleepy':
+            vrm.expressionManager.setValue('relaxed', 0.9)
+            vrm.expressionManager.setValue('blink', 0.8)
+            if (zzzGroupRef.current) {
+              zzzGroupRef.current.visible = true
+              zzzGroupRef.current.children.forEach((z, i) => {
+                z.position.y = 0.8 + i * 0.1 + Math.sin(elapsedTime * 2 + i) * 0.02
+              })
+            }
+            if (vrm.scene) vrm.scene.position.y = -0.67 + Math.sin(elapsedTime * 1.2) * 0.02
+            break
 
-        default: // Neutral
-          if (isBlinking) {
-            setMorph('eyeBlinkLeft', 1.0)
-            setMorph('eyeBlinkRight', 1.0)
-          }
-          setMorph('mouthSmile', 0.15)
-          if (avatarGroupRef.current) {
-            avatarGroupRef.current.position.y = Math.sin(elapsedTime * 2) * 0.02
-            avatarGroupRef.current.rotation.z = 0
-          }
-          break
+          default: // Neutral
+            if (isBlinking) {
+              vrm.expressionManager.setValue('blink', 1.0)
+            }
+            vrm.expressionManager.setValue('neutral', 1.0)
+            if (vrm.scene) {
+              vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 2) * 0.02
+              vrm.scene.rotation.z = 0
+            }
+            break
+        }
+
+        vrm.expressionManager.update()
+        vrm.update(delta)
       }
 
       renderer.render(scene, camera)
@@ -447,7 +382,8 @@ export function useThreeJS(containerRef) {
     }
   }, [containerRef])
 
-  return { sceneRef, rendererRef, avatarGroupRef }
+  return { sceneRef, rendererRef, vrmRef }
 }
+
 
 

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.16.0",
+    "@pixiv/three-vrm": "^3.5.5",
     "@react-three/drei": "^9.88.0",
     "@react-three/fiber": "^8.15.0",
     "@react-three/postprocessing": "^2.16.0",
