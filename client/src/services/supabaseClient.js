@@ -1,8 +1,28 @@
+// ============ SUPABASE CLIENT ============
+
 import { createClient } from '@supabase/supabase-js'
 
-// Get from Vite environment variables or defaults
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.REACT_APP_SUPABASE_URL || 'YOUR_SUPABASE_URL'
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.REACT_APP_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_KEY'
+// Suppress TensorFlow kernel warnings
+if (typeof window !== 'undefined') {
+  const originalWarn = console.warn
+  console.warn = (...args) => {
+    if (args[0]?.includes?.('kernel') && args[0]?.includes?.('already registered')) {
+      return
+    }
+    originalWarn(...args)
+  }
+}
+
+// Get from Vite environment variables
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.REACT_APP_SUPABASE_URL
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.REACT_APP_SUPABASE_ANON_KEY
+
+// Validate
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('Missing Supabase credentials in .env.local')
+  console.error('SUPABASE_URL:', SUPABASE_URL)
+  console.error('SUPABASE_ANON_KEY:', SUPABASE_ANON_KEY ? '***' : 'MISSING')
+}
 
 // Initialize Supabase client
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
