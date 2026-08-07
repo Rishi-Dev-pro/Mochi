@@ -1,0 +1,70 @@
+.cloud-sync-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  z-index: 999;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.online {
+  background: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+}
+
+.status-dot.offline {
+  background: #f87171;
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.5);
+}
+
+.status-text {
+  font-weight: 500;
+}
+
+.queued-badge {
+  padding: 2px 8px;
+  background: rgba(248, 113, 113, 0.2);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #fca5a5;
+}
+
+.sync-spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  font-weight: bold;
+  color: #3b82f6;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+  .cloud-sync-indicator {
+    bottom: 10px;
+    right: 10px;
+    font-size: 0.8rem;
+  }
+}
