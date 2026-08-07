@@ -1,13 +1,15 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { VRMLoaderPlugin } from '@pixiv/three-vrm'
 import { useEmotionStore } from '../store/emotionStore'
 
 export function useThreeJS(containerRef) {
   const sceneRef = useRef(null)
   const rendererRef = useRef(null)
   const vrmRef = useRef(null)
+  const controlsRef = useRef(null)
 
   // Particle & FX Groups
   const tearsGroupRef = useRef(null)
@@ -26,8 +28,10 @@ export function useThreeJS(containerRef) {
 
     const width = containerRef.current.clientWidth
     const height = containerRef.current.clientHeight
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000)
-    camera.position.set(0, 0.6, 2.2) // Framing bust & head of VRM avatar
+    
+    // Position camera to frame head & upper body directly at origin
+    const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 1000)
+    camera.position.set(0, 0.25, 2.0)
 
     // 2. RENDERER SETUP
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -39,22 +43,32 @@ export function useThreeJS(containerRef) {
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
+    // Orbit Controls for user interaction
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.05
+    controls.target.set(0, 0.15, 0)
+    controls.maxPolarAngle = Math.PI / 1.8
+    controls.minDistance = 1.0
+    controls.maxDistance = 4.0
+    controlsRef.current = controls
+
     // 3. SOFT STUDIO LIGHTING
-    const ambientLight = new THREE.AmbientLight(0xfff6f8, 1.4)
+    const ambientLight = new THREE.AmbientLight(0xfff6f8, 1.5)
     scene.add(ambientLight)
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.8)
-    keyLight.position.set(3, 4, 3.5)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.0)
+    keyLight.position.set(2.5, 4, 3.5)
     keyLight.castShadow = true
     keyLight.shadow.mapSize.width = 2048
     keyLight.shadow.mapSize.height = 2048
     scene.add(keyLight)
 
-    const rimLight = new THREE.PointLight(0xffc5d3, 1.5, 10)
+    const rimLight = new THREE.PointLight(0xffc5d3, 1.6, 10)
     rimLight.position.set(-2.5, 2.5, -2)
     scene.add(rimLight)
 
-    const fillLight = new THREE.PointLight(0x9ee8fa, 1.0, 10)
+    const fillLight = new THREE.PointLight(0x9ee8fa, 1.2, 10)
     fillLight.position.set(2.5, 1, 2)
     scene.add(fillLight)
 
@@ -70,11 +84,11 @@ export function useThreeJS(containerRef) {
         const vrm = gltf.userData.vrm
         if (!vrm) return
 
-        // Rotate & position avatar
-        VRMUtils.rotateVRM0(vrm)
-        vrm.scene.position.set(0, -0.65, 0)
-        vrm.scene.scale.set(1.4, 1.4, 1.4)
-        
+        // Position avatar so face is centered at Y = 0.15
+        vrm.scene.position.set(0, -1.25, 0)
+        vrm.scene.scale.set(1.35, 1.35, 1.35)
+        vrm.scene.rotation.y = Math.PI // Face forward directly at camera
+
         // Enable shadows
         vrm.scene.traverse((obj) => {
           if (obj.isMesh) {
@@ -106,11 +120,11 @@ export function useThreeJS(containerRef) {
     const tearMat = new THREE.MeshBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.85 })
 
     const leftTear = new THREE.Mesh(tearGeo, tearMat)
-    leftTear.position.set(-0.08, 0.72, 0.5)
+    leftTear.position.set(-0.07, 0.24, 0.45)
     tearsGroup.add(leftTear)
 
     const rightTear = new THREE.Mesh(tearGeo, tearMat)
-    rightTear.position.set(0.08, 0.72, 0.5)
+    rightTear.position.set(0.07, 0.24, 0.45)
     tearsGroup.add(rightTear)
     tearsGroup.visible = false
 
@@ -125,7 +139,7 @@ export function useThreeJS(containerRef) {
     for (let i = 0; i < 6; i++) {
       const ember = new THREE.Mesh(emberGeo, emberMat)
       const angle = (i / 6) * Math.PI * 2
-      ember.position.set(Math.cos(angle) * 0.45, 0.7 + (i % 3) * 0.08, Math.sin(angle) * 0.45)
+      ember.position.set(Math.cos(angle) * 0.4, 0.25 + (i % 3) * 0.08, Math.sin(angle) * 0.4)
       angryEmberGroup.add(ember)
     }
     angryEmberGroup.visible = false
@@ -138,8 +152,8 @@ export function useThreeJS(containerRef) {
     const waveMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, wireframe: true, transparent: true, opacity: 0.7 })
 
     for (let i = 0; i < 3; i++) {
-      const wave = new THREE.Mesh(new THREE.TorusGeometry(0.08 + i * 0.05, 0.008, 12, 24), waveMat)
-      wave.position.set(0, 0.62, 0.5 + i * 0.1)
+      const wave = new THREE.Mesh(new THREE.TorusGeometry(0.07 + i * 0.04, 0.007, 12, 24), waveMat)
+      wave.position.set(0, 0.16, 0.45 + i * 0.1)
       shoutWaveGroup.add(wave)
     }
     shoutWaveGroup.visible = false
@@ -151,8 +165,8 @@ export function useThreeJS(containerRef) {
 
     const zMat = new THREE.MeshBasicMaterial({ color: 0xa78bfa })
     for (let i = 0; i < 3; i++) {
-      const zMesh = new THREE.Mesh(new THREE.BoxGeometry(0.05 - i * 0.01, 0.012, 0.012), zMat)
-      zMesh.position.set(0.2 + i * 0.06, 0.8 + i * 0.1, 0.3)
+      const zMesh = new THREE.Mesh(new THREE.BoxGeometry(0.045 - i * 0.01, 0.012, 0.012), zMat)
+      zMesh.position.set(0.18 + i * 0.05, 0.35 + i * 0.08, 0.3)
       zzzGroup.add(zMesh)
     }
     zzzGroup.visible = false
@@ -164,19 +178,19 @@ export function useThreeJS(containerRef) {
 
     const starMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 })
     for (let i = 0; i < 5; i++) {
-      const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.025), starMat)
+      const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.022), starMat)
       const angle = (i / 5) * Math.PI * 2
-      star.position.set(Math.cos(angle) * 0.3, 1.05 + (i % 2) * 0.05, Math.sin(angle) * 0.2)
+      star.position.set(Math.cos(angle) * 0.3, 0.5 + (i % 2) * 0.05, Math.sin(angle) * 0.2)
       surpriseGroup.add(star)
     }
     surpriseGroup.visible = false
 
     // F. Confused Question Mark (Confused)
     const confusedMark = new THREE.Mesh(
-      new THREE.TorusGeometry(0.04, 0.012, 12, 20, Math.PI * 1.5),
+      new THREE.TorusGeometry(0.038, 0.01, 12, 20, Math.PI * 1.5),
       new THREE.MeshBasicMaterial({ color: 0xeab308 })
     )
-    confusedMark.position.set(0.22, 1.0, 0.2)
+    confusedMark.position.set(0.2, 0.48, 0.2)
     confusedMarkRef.current = confusedMark
     confusedMark.visible = false
     scene.add(confusedMark)
@@ -212,10 +226,12 @@ export function useThreeJS(containerRef) {
       const delta = clock.getDelta()
       const elapsedTime = clock.getElapsedTime()
 
+      if (controlsRef.current) controlsRef.current.update()
+
       const vrm = vrmRef.current
       const activeEmotion = useEmotionStore.getState().currentEmotion?.type || 'neutral'
 
-      // Smooth Head Tracking
+      // Smooth Head Tracking & Arm Poses
       mouse.x += (mouse.targetX - mouse.x) * 0.08
       mouse.y += (mouse.targetY - mouse.y) * 0.08
 
@@ -224,6 +240,27 @@ export function useThreeJS(containerRef) {
         if (headNode) {
           headNode.rotation.y = mouse.x
           headNode.rotation.x = -mouse.y
+        }
+
+        // Apply natural resting arm pose (lowered arms down at sides instead of T-pose)
+        const leftUpperArm = vrm.humanoid.getNormalizedBoneNode('leftUpperArm')
+        const rightUpperArm = vrm.humanoid.getNormalizedBoneNode('rightUpperArm')
+        const leftLowerArm = vrm.humanoid.getNormalizedBoneNode('leftLowerArm')
+        const rightLowerArm = vrm.humanoid.getNormalizedBoneNode('rightLowerArm')
+
+        if (activeEmotion === 'waving') {
+          if (leftUpperArm) leftUpperArm.rotation.z = 1.25
+          if (leftLowerArm) leftLowerArm.rotation.z = 0.1
+          if (rightUpperArm) {
+            rightUpperArm.rotation.z = -0.4 + Math.sin(elapsedTime * 6) * 0.35
+            rightUpperArm.rotation.x = 0.5
+          }
+          if (rightLowerArm) rightLowerArm.rotation.y = -0.5
+        } else {
+          if (leftUpperArm) leftUpperArm.rotation.z = 1.25
+          if (rightUpperArm) rightUpperArm.rotation.z = -1.25
+          if (leftLowerArm) leftLowerArm.rotation.z = 0.15
+          if (rightLowerArm) rightLowerArm.rotation.z = -0.15
         }
       }
 
@@ -246,18 +283,14 @@ export function useThreeJS(containerRef) {
           case 'happy':
           case 'excited':
             vrm.expressionManager.setValue('happy', 1.0)
-            if (vrm.scene) vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 4) * 0.03
+            if (vrm.scene) vrm.scene.position.y = -1.25 + Math.sin(elapsedTime * 4) * 0.03
             break
 
           case 'waving':
             vrm.expressionManager.setValue('happy', 1.0)
             if (vrm.scene) {
-              vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 3) * 0.02
-              vrm.scene.rotation.z = Math.sin(elapsedTime * 4) * 0.04
-            }
-            if (vrm.humanoid) {
-              const rArm = vrm.humanoid.getNormalizedBoneNode('rightUpperArm')
-              if (rArm) rArm.rotation.z = -1.2 + Math.sin(elapsedTime * 6) * 0.3
+              vrm.scene.position.y = -1.25 + Math.sin(elapsedTime * 3) * 0.02
+              vrm.scene.rotation.y = Math.PI + Math.sin(elapsedTime * 4) * 0.04
             }
             break
 
@@ -266,8 +299,8 @@ export function useThreeJS(containerRef) {
             vrm.expressionManager.setValue('blinkLeft', 1.0) // Playful Wink!
             vrm.expressionManager.setValue('oh', 0.3)
             if (vrm.scene) {
-              vrm.scene.rotation.z = Math.sin(elapsedTime * 3) * 0.05
-              vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 4) * 0.02
+              vrm.scene.rotation.y = Math.PI + Math.sin(elapsedTime * 3) * 0.05
+              vrm.scene.position.y = -1.25 + Math.sin(elapsedTime * 4) * 0.02
             }
             break
 
@@ -281,7 +314,7 @@ export function useThreeJS(containerRef) {
                 w.scale.set(s, s, s)
               })
             }
-            if (vrm.scene) vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 15) * 0.02
+            if (vrm.scene) vrm.scene.position.y = -1.25 + Math.sin(elapsedTime * 15) * 0.02
             break
 
           case 'angry':
@@ -290,7 +323,7 @@ export function useThreeJS(containerRef) {
               angryEmberGroupRef.current.visible = true
               angryEmberGroupRef.current.rotation.y = elapsedTime * 4
             }
-            if (vrm.scene) vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 8) * 0.02
+            if (vrm.scene) vrm.scene.position.y = -1.25 + Math.sin(elapsedTime * 8) * 0.02
             break
 
           case 'sad':
@@ -298,10 +331,10 @@ export function useThreeJS(containerRef) {
             if (tearsGroupRef.current) {
               tearsGroupRef.current.visible = true
               tearsGroupRef.current.children.forEach((t, i) => {
-                t.position.y = 0.72 - ((elapsedTime * 1.5 + i * 0.4) % 0.3)
+                t.position.y = 0.24 - ((elapsedTime * 1.5 + i * 0.4) % 0.3)
               })
             }
-            if (vrm.scene) vrm.scene.position.y = -0.68 + Math.sin(elapsedTime * 1.5) * 0.015
+            if (vrm.scene) vrm.scene.position.y = -1.28 + Math.sin(elapsedTime * 1.5) * 0.015
             break
 
           case 'surprised':
@@ -310,7 +343,7 @@ export function useThreeJS(containerRef) {
               surpriseGroupRef.current.visible = true
               surpriseGroupRef.current.rotation.y = elapsedTime * 2
             }
-            if (vrm.scene) vrm.scene.position.y = -0.62 + Math.sin(elapsedTime * 6) * 0.02
+            if (vrm.scene) vrm.scene.position.y = -1.22 + Math.sin(elapsedTime * 6) * 0.02
             break
 
           case 'confused':
@@ -320,7 +353,7 @@ export function useThreeJS(containerRef) {
               confusedMarkRef.current.visible = true
               confusedMarkRef.current.rotation.z = Math.sin(elapsedTime * 4) * 0.2
             }
-            if (vrm.scene) vrm.scene.rotation.z = 0.12
+            if (vrm.scene) vrm.scene.rotation.y = Math.PI + 0.15
             break
 
           case 'sleepy':
@@ -329,10 +362,10 @@ export function useThreeJS(containerRef) {
             if (zzzGroupRef.current) {
               zzzGroupRef.current.visible = true
               zzzGroupRef.current.children.forEach((z, i) => {
-                z.position.y = 0.8 + i * 0.1 + Math.sin(elapsedTime * 2 + i) * 0.02
+                z.position.y = 0.35 + i * 0.08 + Math.sin(elapsedTime * 2 + i) * 0.02
               })
             }
-            if (vrm.scene) vrm.scene.position.y = -0.67 + Math.sin(elapsedTime * 1.2) * 0.02
+            if (vrm.scene) vrm.scene.position.y = -1.27 + Math.sin(elapsedTime * 1.2) * 0.02
             break
 
           default: // Neutral
@@ -341,8 +374,8 @@ export function useThreeJS(containerRef) {
             }
             vrm.expressionManager.setValue('neutral', 1.0)
             if (vrm.scene) {
-              vrm.scene.position.y = -0.65 + Math.sin(elapsedTime * 2) * 0.02
-              vrm.scene.rotation.z = 0
+              vrm.scene.position.y = -1.25 + Math.sin(elapsedTime * 2) * 0.02
+              vrm.scene.rotation.y = Math.PI
             }
             break
         }
@@ -382,8 +415,9 @@ export function useThreeJS(containerRef) {
     }
   }, [containerRef])
 
-  return { sceneRef, rendererRef, vrmRef }
+  return { sceneRef, rendererRef, vrmRef, controlsRef }
 }
+
 
 
 
