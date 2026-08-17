@@ -3,11 +3,11 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { AudioEngine, AUDIO_ENGINE_EVENTS } from '../src/voice/audioEngine'
-import { TtsService, TTS_EVENTS } from '../src/voice/ttsService'
-import { TTS_CONFIG, TTS_STATES } from '../src/voice/config'
+import { TtsService } from '../src/voice/ttsService'
+import { TTS_STATES } from '../src/voice/config'
 import { useVoiceStore } from '../src/store/useVoiceStore'
 
-describe('Web Audio TTS & Amplitude Analysis Suite (Milestone 3)', () => {
+describe('Web Audio Real-Audio TTS & Amplitude Analysis Suite (Milestone 3)', () => {
   beforeEach(() => {
     useVoiceStore.setState({
       voiceMode: false,
@@ -18,7 +18,7 @@ describe('Web Audio TTS & Amplitude Analysis Suite (Milestone 3)', () => {
     })
   })
 
-  describe('AudioEngine Web Audio & Amplitude Analyzer', () => {
+  describe('AudioEngine Web Audio & Real RMS Amplitude Analyzer', () => {
     it('initializes with default config and zero amplitude', () => {
       const engine = new AudioEngine()
       expect(engine.getAmplitude()).toBe(0.0)
@@ -37,33 +37,60 @@ describe('Web Audio TTS & Amplitude Analysis Suite (Milestone 3)', () => {
       expect(engine.config.volume).toBe(0.75)
     })
 
-    it('calculates and emits smoothed amplitude within [0.0, 1.0]', () => {
-      const engine = new AudioEngine({ amplitudeSmoothing: 0.5 })
+    it('calculates true RMS from Float32Array time-domain audio samples', () => {
+      const engine = new AudioEngine({ amplitudeSmoothing: 0.0 }) // zero smoothing for raw calculation
       const listener = vi.fn()
       engine.on(AUDIO_ENGINE_EVENTS.AMPLITUDE, listener)
 
-      engine.isPlaying = true
-      engine.setTargetAmplitude(0.8)
+      // Mock AnalyserNode with genuine sine wave float samples
+      const mockSamples = new Float32Array(512)
+      for (let i = 0; i < mockSamples.length; i++) {
+        mockSamples[i] = Math.sin((i * 2 * Math.PI) / 32) * 0.5
+      }
 
-      // Run internal calculation cycle
+      engine.analyserNode = {
+        fftSize: 512,
+        getFloatTimeDomainData: (arr) => arr.set(mockSamples)
+      }
+
+      engine.isPlaying = true
       engine._analysisLoop()
 
       const amp = engine.getAmplitude()
-      expect(amp).toBeGreaterThanOrEqual(0.0)
+      expect(amp).toBeGreaterThan(0.0)
       expect(amp).toBeLessThanOrEqual(1.0)
       expect(listener).toHaveBeenCalledWith(expect.any(Number))
     })
 
-    it('smooths rapid amplitude spikes gracefully', () => {
-      const engine = new AudioEngine({ amplitudeSmoothing: 0.8 })
-      engine.isPlaying = true
+    it('returns 0.0 amplitude when samples are silent (disconnect / silence test)', () => {
+      const engine = new AudioEngine({ amplitudeSmoothing: 0.0 })
 
-      // Sudden jump from 0.0 to 1.0
-      engine.setTargetAmplitude(1.0)
+      // Mock silent AnalyserNode (all zeros)
+      engine.analyserNode = {
+        fftSize: 512,
+        getFloatTimeDomainData: (arr) => arr.fill(0)
+      }
+
+      engine.isPlaying = true
+      engine._analysisLoop()
+
+      expect(engine.getAmplitude()).toBe(0.0)
+    })
+
+    it('smooths rapid amplitude spikes gracefully with EMA', () => {
+      const engine = new AudioEngine({ amplitudeSmoothing: 0.8 })
+      const loudSamples = new Float32Array(512).fill(0.8)
+
+      engine.analyserNode = {
+        fftSize: 512,
+        getFloatTimeDomainData: (arr) => arr.set(loudSamples)
+      }
+
+      engine.isPlaying = true
       engine._analysisLoop()
       const step1 = engine.getAmplitude()
 
-      // Should be smoothed, not jumping immediately to 1.0
+      // First step smoothed
       expect(step1).toBeGreaterThan(0.0)
       expect(step1).toBeLessThan(1.0)
 
@@ -96,78 +123,21 @@ describe('Web Audio TTS & Amplitude Analysis Suite (Milestone 3)', () => {
       expect(tts.getState()).toBe(TTS_STATES.IDLE)
     })
 
-    it('handles unsupported browser environment safely without crashing', async () => {
+    it('handles unsupported environment safely without crashing', async () => {
       const tts = new TtsService()
-      vi.stubGlobal('speechSynthesis', undefined)
+      vi.stubGlobal('AudioContext', undefined)
+      vi.stubGlobal('webkitAudioContext', undefined)
 
       const result = await tts.speak('Hello Mochi!')
       expect(result).toBe(false)
       expect(tts.getState()).toBe(TTS_STATES.ERROR)
     })
 
-    it('manages speech synthesis lifecycle events with mock SpeechSynthesis', async () => {
-      const tts = new TtsService()
-
-      let mockUtterance = null
-      const mockSpeak = vi.fn().mockImplementation((utt) => {
-        mockUtterance = utt
-        // Simulate immediate start
-        utt.onstart?.()
-      })
-
-      const mockCancel = vi.fn()
-
-      vi.stubGlobal('window', {
-        speechSynthesis: {
-          speak: mockSpeak,
-          cancel: mockCancel,
-          speaking: false,
-          getVoices: () => []
-        }
-      })
-      vi.stubGlobal('SpeechSynthesisUtterance', class {
-        constructor(text) {
-          this.text = text
-          this.lang = 'en-US'
-          this.rate = 1.0
-          this.pitch = 1.0
-          this.volume = 1.0
-        }
-      })
-
-      const startPromise = tts.speak('Hello from Mochi!')
-      expect(mockSpeak).toHaveBeenCalled()
-      expect(tts.getState()).toBe(TTS_STATES.SPEAKING)
-      expect(tts.isSpeaking()).toBe(true)
-
-      // Simulate completion
-      mockUtterance.onend?.()
-      await startPromise
-      expect(tts.isSpeaking()).toBe(false)
-    })
-
     it('interrupts previous speech when a new utterance is requested', async () => {
       const tts = new TtsService()
-      const mockCancel = vi.fn()
-
-      vi.stubGlobal('window', {
-        speechSynthesis: {
-          speak: vi.fn(),
-          cancel: mockCancel,
-          speaking: true,
-          getVoices: () => []
-        }
-      })
-      vi.stubGlobal('SpeechSynthesisUtterance', class {
-        constructor(text) {
-          this.text = text
-        }
-      })
-
       tts.state = TTS_STATES.SPEAKING
-      tts.stop()
 
-      expect(mockCancel).toHaveBeenCalled()
+      tts.stop()
       expect(tts.getState()).toBe(TTS_STATES.IDLE)
       expect(tts.isSpeaking()).toBe(false)
     })

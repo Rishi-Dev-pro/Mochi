@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { sendMessage } from './functions/chat.js'
+import { handleTtsRequest } from './routes/tts.js'
 
 dotenv.config()
 
@@ -17,8 +18,12 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
-// NEW: Claude API proxy endpoint
+// Claude API proxy endpoint
 app.post('/api/chat', sendMessage)
+
+// Local Free TTS endpoint
+app.post('/api/tts', handleTtsRequest)
+
 
 // Placeholder routes (to be implemented in Phase 3+)
 app.post('/api/check-in', (req, res) => {

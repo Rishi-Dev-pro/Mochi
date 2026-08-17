@@ -1,15 +1,19 @@
 /**
  * Web Audio Engine & Real-Time Amplitude Analyzer
  *
- * Manages AudioContext lifecycle, AnalyserNode, GainNode, and normalized RMS amplitude analysis (0.0 - 1.0).
- * Prepares a clean, responsive, and smoothed amplitude signal for Milestone 4 (Lip-Sync).
+ * Manages AudioContext lifecycle, real AudioBufferSourceNode playback,
+ * AnalyserNode (FFT & Time-Domain), GainNode (Volume), and true physical RMS audio energy calculation (0.0 - 1.0).
+ *
+ * The AnalyserNode receives the EXACT SAME physical speech waveform sent to the speakers.
+ * Zero synthetic oscillators. Zero artificial boundary simulations.
  */
 
 import { TTS_CONFIG } from './config'
 
 export const AUDIO_ENGINE_EVENTS = {
   AMPLITUDE: 'amplitude',
-  STATE_CHANGE: 'state_change'
+  STATE_CHANGE: 'state_change',
+  ENDED: 'ended'
 }
 
 export class AudioEngine {
@@ -19,12 +23,11 @@ export class AudioEngine {
     this.audioContext = null
     this.analyserNode = null
     this.gainNode = null
-    this.carrierSource = null
+    this.currentSource = null
     this.animationFrameId = null
 
     this.isPlaying = false
     this.currentAmplitude = 0.0
-    this.targetAmplitude = 0.0
     this.listeners = new Map()
   }
 
@@ -84,13 +87,15 @@ export class AudioEngine {
     return this.audioContext
   }
 
-
   /**
    * Set up AnalyserNode and GainNode pipeline
+   *
+   * Audio Pipeline:
+   * [AudioBufferSourceNode] ──► [AnalyserNode] ──► [GainNode] ──► [AudioContext.destination (Speakers)]
    */
   setupAudioPipeline() {
     const ctx = this.getOrCreateContext()
-    if (!ctx) return
+    if (!ctx) return null
 
     if (!this.gainNode) {
       this.gainNode = ctx.createGain()
@@ -100,10 +105,12 @@ export class AudioEngine {
 
     if (!this.analyserNode) {
       this.analyserNode = ctx.createAnalyser()
-      this.analyserNode.fftSize = this.config.fftSize
-      this.analyserNode.smoothingTimeConstant = this.config.smoothingTimeConstant
+      this.analyserNode.fftSize = this.config.fftSize || 512
+      this.analyserNode.smoothingTimeConstant = this.config.smoothingTimeConstant !== undefined ? this.config.smoothingTimeConstant : 0.8
       this.analyserNode.connect(this.gainNode)
     }
+
+    return ctx
   }
 
   /**
@@ -119,96 +126,108 @@ export class AudioEngine {
   }
 
   /**
-   * Start playback analysis loop
+   * Play genuine decoded audio buffer through Web Audio graph and AnalyserNode
+   * @param {AudioBuffer} audioBuffer
+   * @returns {Promise<void>}
    */
-  startAnalysis() {
-    this.setupAudioPipeline()
-    this.isPlaying = true
-    this._startSyntheticCarrier()
-    this._analysisLoop()
-    this.emit(AUDIO_ENGINE_EVENTS.STATE_CHANGE, { isPlaying: true })
-  }
-
-  /**
-   * Internal synthetic voice energy carrier routed through AnalyserNode
-   * Ensures Web Audio AnalyserNode receives physical spectral energy during speech synthesis
-   */
-  _startSyntheticCarrier() {
-    if (!this.audioContext || this.carrierSource) return
-
-    try {
-      // Create sub-audible tracking carrier oscillator into AnalyserNode
-      const osc = this.audioContext.createOscillator()
-      const carrierGain = this.audioContext.createGain()
-
-      osc.type = 'sine'
-      osc.frequency.value = 180 // Speech fundamental frequency
-
-      carrierGain.gain.value = 0.05 // Subtle tracking amplitude
-      osc.connect(carrierGain)
-      carrierGain.connect(this.analyserNode)
-
-      osc.start()
-      this.carrierSource = { osc, carrierGain }
-    } catch (e) {
-      // Ignore if oscillator fails
+  async playAudioBuffer(audioBuffer) {
+    if (!audioBuffer) {
+      throw new Error('AudioBuffer is required for playback')
     }
-  }
 
-  _stopSyntheticCarrier() {
-    if (this.carrierSource) {
+    // Stop any existing playback before starting new
+    this.stop()
+
+    const ctx = this.setupAudioPipeline()
+    if (!ctx) {
+      throw new Error('Web Audio AudioContext is unavailable')
+    }
+
+    if (ctx.state === 'suspended') {
       try {
-        this.carrierSource.osc.stop()
-        this.carrierSource.osc.disconnect()
-        this.carrierSource.carrierGain.disconnect()
-      } catch (e) {}
-      this.carrierSource = null
+        await ctx.resume()
+      } catch (err) {
+        console.warn('[AudioEngine] AudioContext resume error:', err)
+      }
+    }
+
+    return new Promise((resolve) => {
+      const source = ctx.createBufferSource()
+      source.buffer = audioBuffer
+      source.connect(this.analyserNode)
+
+      this.currentSource = source
+      this.isPlaying = true
+      this.currentAmplitude = 0.0
+
+      source.onended = () => {
+        if (this.currentSource === source) {
+          this.isPlaying = false
+          this.currentSource = null
+          this._stopAnalysisLoop()
+          this.currentAmplitude = 0.0
+          this.emit(AUDIO_ENGINE_EVENTS.AMPLITUDE, 0.0)
+          this.emit(AUDIO_ENGINE_EVENTS.STATE_CHANGE, { isPlaying: false })
+          this.emit(AUDIO_ENGINE_EVENTS.ENDED)
+          resolve()
+        }
+      }
+
+      source.start(0)
+      this._startAnalysisLoop()
+      this.emit(AUDIO_ENGINE_EVENTS.STATE_CHANGE, { isPlaying: true })
+    })
+  }
+
+  /**
+   * Start animation frame loop for true physical RMS calculation
+   */
+  _startAnalysisLoop() {
+    this._stopAnalysisLoop()
+    this._analysisLoop()
+  }
+
+  _stopAnalysisLoop() {
+    if (this.animationFrameId) {
+      if (typeof cancelAnimationFrame !== 'undefined') {
+        cancelAnimationFrame(this.animationFrameId)
+      }
+      this.animationFrameId = null
     }
   }
 
   /**
-   * Update real-time target amplitude (e.g. from speech boundary or synthetic wave)
-   * @param {number} rawAmp (0.0 to 1.0)
-   */
-  setTargetAmplitude(rawAmp) {
-    this.targetAmplitude = Math.max(0.0, Math.min(1.0, rawAmp))
-  }
-
-  /**
-   * Continuous analysis loop for RMS amplitude calculation and smoothing
+   * Continuous analysis loop reading ACTUAL float samples from AnalyserNode
    */
   _analysisLoop = () => {
     if (!this.isPlaying) return
 
-    let calculatedAmp = 0.0
+    let rawRms = 0.0
 
     if (this.analyserNode) {
-      const timeData = new Uint8Array(this.analyserNode.fftSize)
-      this.analyserNode.getByteTimeDomainData(timeData)
+      const timeData = new Float32Array(this.analyserNode.fftSize)
+      this.analyserNode.getFloatTimeDomainData(timeData)
 
-      // Calculate Root Mean Square (RMS)
+      // Calculate true Root Mean Square (RMS) of acoustic waveform
       let sum = 0
       for (let i = 0; i < timeData.length; i++) {
-        const normalized = (timeData[i] - 128) / 128
-        sum += normalized * normalized
+        const val = timeData[i]
+        sum += val * val
       }
-      const rawRms = Math.sqrt(sum / timeData.length)
-
-      // Normalize amplitude against baseline reference
-      const scaled = Math.min(1.0, rawRms * 3.5)
-      calculatedAmp = Math.max(scaled, this.targetAmplitude)
-    } else {
-      calculatedAmp = this.targetAmplitude
+      rawRms = Math.sqrt(sum / timeData.length)
     }
 
-    // Apply exponential smoothing: smoothed = (1 - alpha) * current + alpha * target
-    const alpha = 1.0 - this.config.amplitudeSmoothing
-    this.currentAmplitude = this.currentAmplitude + alpha * (calculatedAmp - this.currentAmplitude)
+    // Dynamic scale normalization: typical conversational speech RMS ~ 0.05 to 0.35
+    const scaled = Math.min(1.0, rawRms * 3.8)
 
-    // Clamp within 0.0 and 1.0
+    // Apply exponential smoothing: smoothed = current + alpha * (target - current)
+    const alpha = 1.0 - (this.config.amplitudeSmoothing !== undefined ? this.config.amplitudeSmoothing : 0.65)
+    this.currentAmplitude = this.currentAmplitude + alpha * (scaled - this.currentAmplitude)
+
+    // Clamp strictly within 0.0 and 1.0
     const normalizedAmplitude = Math.max(0.0, Math.min(1.0, this.currentAmplitude))
 
-    // Emit amplitude update (floating point 0.0 to 1.0)
+    // Emit real amplitude update (floating point 0.0 to 1.0)
     this.emit(AUDIO_ENGINE_EVENTS.AMPLITUDE, normalizedAmplitude)
 
     this.animationFrameId = typeof requestAnimationFrame !== 'undefined'
@@ -217,21 +236,31 @@ export class AudioEngine {
   }
 
   /**
-   * Stop audio playback, terminate carrier, and reset amplitude to 0.0
+   * Retrieve raw frequency bins from AnalyserNode for future spectral / viseme analysis
+   * @returns {Uint8Array|null}
+   */
+  getFrequencyData() {
+    if (!this.analyserNode) return null
+    const freqData = new Uint8Array(this.analyserNode.frequencyBinCount)
+    this.analyserNode.getByteFrequencyData(freqData)
+    return freqData
+  }
+
+  /**
+   * Stop audio playback immediately, disconnect source, cancel loop, and reset amplitude to 0.0
    */
   stop() {
     this.isPlaying = false
-    this.targetAmplitude = 0.0
     this.currentAmplitude = 0.0
+    this._stopAnalysisLoop()
 
-    if (this.animationFrameId) {
-      if (typeof cancelAnimationFrame !== 'undefined') {
-        cancelAnimationFrame(this.animationFrameId)
-      }
-      this.animationFrameId = null
+    if (this.currentSource) {
+      try {
+        this.currentSource.stop()
+        this.currentSource.disconnect()
+      } catch (e) {}
+      this.currentSource = null
     }
-
-    this._stopSyntheticCarrier()
 
     // Reset amplitude to zero immediately
     this.emit(AUDIO_ENGINE_EVENTS.AMPLITUDE, 0.0)
