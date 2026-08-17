@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useClaude } from '../hooks/useClaude'
 import { useEmotionAwareChat } from '../hooks/useEmotionAwareChat'
 import { formatEmotionSummary } from '../services/emotionAwareChatService'
+import { voiceAiBridge } from '../voice/voiceAiBridge'
 import VoiceController from './VoiceController'
 import './ChatInterface.css'
+
 
 export default function ChatInterface() {
   const { messages, sendMessage, loading } = useClaude()

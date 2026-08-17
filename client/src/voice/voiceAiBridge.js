@@ -5,8 +5,9 @@
  * Features:
  * - Utterance deduplication (prevents duplicate requests from STT event bursts)
  * - Empty/whitespace transcript filtering
- * - AI state coordination (THINKING -> RESPONDING -> LISTENING)
- * - Decoupled integration with the chat messaging engine
+ * - Self-hearing feedback loop protection (gating during PROCESSING & MOCHI_SPEAKING)
+ * - Turn ID correlation & stale response protection
+ * - Conversational state coordination (LISTENING -> USER_SPEAKING -> PROCESSING -> MOCHI_SPEAKING -> LISTENING)
  */
 
 import { VOICE_STATES } from './config'
@@ -19,6 +20,7 @@ export class VoiceAiBridge {
     this.lastProcessedText = ''
     this.lastProcessedTimestamp = 0
     this.isProcessing = false
+    this.currentTurnId = null
   }
 
   /**
@@ -37,7 +39,7 @@ export class VoiceAiBridge {
   }
 
   /**
-   * Check if an utterance is a duplicate or invalid
+   * Check if an utterance is a duplicate, invalid, or blocked by self-hearing gate
    * @param {string} text
    * @param {string|number} [id]
    * @returns {boolean}
@@ -47,6 +49,13 @@ export class VoiceAiBridge {
 
     const trimmed = text.trim()
     if (!trimmed) return true
+
+    const store = useVoiceStore.getState()
+
+    // Self-Hearing Gate: Discard input while Mochi is speaking or processing
+    if (store.isMochiSpeaking || store.voiceState === VOICE_STATES.MOCHI_SPEAKING || store.voiceState === VOICE_STATES.PROCESSING || this.isProcessing) {
+      return true
+    }
 
     const now = Date.now()
 
@@ -79,11 +88,12 @@ export class VoiceAiBridge {
 
     const trimmed = transcript.trim()
     const now = Date.now()
+    const turnId = `turn-${now}-${Math.random().toString(36).substr(2, 6)}`
+    this.currentTurnId = turnId
 
     // Mark as processed
     if (utteranceId) {
       this.processedUtterances.add(utteranceId)
-      // Limit memory size of processed utterances set
       if (this.processedUtterances.size > 100) {
         const firstEntry = this.processedUtterances.values().next().value
         this.processedUtterances.delete(firstEntry)
@@ -102,33 +112,25 @@ export class VoiceAiBridge {
     const store = useVoiceStore.getState()
 
     try {
-      store.setVoiceState(VOICE_STATES.THINKING)
+      store.setVoiceState(VOICE_STATES.PROCESSING)
 
-      // Send through the unified AI messaging pipeline
-      await this.sendHandler(trimmed)
+      // Send through the unified AI messaging pipeline tagged with turnId
+      await this.sendHandler(trimmed, turnId)
 
-      // Transition to RESPONDING
-      if (useVoiceStore.getState().voiceMode) {
-        useVoiceStore.getState().setVoiceState(VOICE_STATES.RESPONDING)
-
-        // Return to LISTENING after short duration for seamless continuous voice mode
-        setTimeout(() => {
-          const currentStore = useVoiceStore.getState()
-          if (
-            currentStore.voiceMode &&
-            (currentStore.voiceState === VOICE_STATES.RESPONDING || currentStore.voiceState === VOICE_STATES.THINKING)
-          ) {
-            currentStore.setVoiceState(VOICE_STATES.LISTENING)
-          }
-        }, 1000)
-      }
-
+      // Turn response handled asynchronously by useClaude -> ttsService
       return true
     } catch (error) {
       console.error('[VoiceAiBridge] Error processing voice transcript with AI:', error)
       const currentStore = useVoiceStore.getState()
       if (currentStore.voiceMode) {
         currentStore.setVoiceState(VOICE_STATES.ERROR)
+
+        // Auto-recover back to LISTENING after short delay
+        setTimeout(() => {
+          if (useVoiceStore.getState().voiceMode && useVoiceStore.getState().voiceState === VOICE_STATES.ERROR) {
+            useVoiceStore.getState().setVoiceState(VOICE_STATES.LISTENING)
+          }
+        }, 1200)
       }
       return false
     } finally {
@@ -144,6 +146,7 @@ export class VoiceAiBridge {
     this.lastProcessedText = ''
     this.lastProcessedTimestamp = 0
     this.isProcessing = false
+    this.currentTurnId = null
   }
 }
 

@@ -30,7 +30,7 @@ describe('Voice-to-AI Bridge & Emotion Extraction Suite (Milestone 2)', () => {
 
       const result = await bridge.processUtterance('Hello Mochi', 'utterance-1')
       expect(result).toBe(true)
-      expect(mockSend).toHaveBeenCalledWith('Hello Mochi')
+      expect(mockSend).toHaveBeenCalledWith('Hello Mochi', expect.any(String))
       expect(mockSend).toHaveBeenCalledTimes(1)
     })
 
@@ -72,7 +72,7 @@ describe('Voice-to-AI Bridge & Emotion Extraction Suite (Milestone 2)', () => {
       expect(mockSend).toHaveBeenCalledTimes(1)
     })
 
-    it('transitions voiceState from LISTENING -> THINKING -> RESPONDING', async () => {
+    it('transitions voiceState to PROCESSING during AI generation', async () => {
       const bridge = new VoiceAiBridge()
       let observedStateDuringProcessing = null
 
@@ -83,10 +83,10 @@ describe('Voice-to-AI Bridge & Emotion Extraction Suite (Milestone 2)', () => {
       bridge.registerSendHandler(mockSend)
 
       await bridge.processUtterance('How are you feel today?')
-      expect(observedStateDuringProcessing).toBe(VOICE_STATES.THINKING)
-      expect(useVoiceStore.getState().voiceState).toBe(VOICE_STATES.RESPONDING)
+      expect(observedStateDuringProcessing).toBe(VOICE_STATES.PROCESSING)
     })
   })
+
 
   describe('Emotion Tag Extraction & Validation', () => {
     it('extracts self-closing emotion tags with integer intensity', () => {

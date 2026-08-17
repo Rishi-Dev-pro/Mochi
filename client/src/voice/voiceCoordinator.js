@@ -80,18 +80,28 @@ export class VoiceCoordinator {
 
     const unsubVadStart = voiceActivityDetector.on(VAD_EVENTS.SPEECH_START, () => {
       this._updateStore((store) => {
+        // Self-Hearing Protection Gate: Ignore VAD triggers while Mochi is speaking or processing
+        if (store.isMochiSpeaking || store.voiceState === VOICE_STATES.MOCHI_SPEAKING || store.voiceState === VOICE_STATES.PROCESSING) {
+          return
+        }
+
         store.setIsSpeaking(true)
         if (store.voiceState === VOICE_STATES.LISTENING) {
-          store.setVoiceState(VOICE_STATES.SPEECH_STARTED)
+          store.setVoiceState(VOICE_STATES.USER_SPEAKING)
         }
       })
     })
     this.unsubscribers.push(unsubVadStart)
 
     const unsubVadEnd = voiceActivityDetector.on(VAD_EVENTS.SPEECH_END, () => {
-      // VAD indicates silence threshold reached; signal STT to finalize current phrase
-      speechRecognitionService.finalizeCurrentUtterance()
       this._updateStore((store) => {
+        // Self-Hearing Protection Gate: Ignore VAD triggers while Mochi is speaking or processing
+        if (store.isMochiSpeaking || store.voiceState === VOICE_STATES.MOCHI_SPEAKING || store.voiceState === VOICE_STATES.PROCESSING) {
+          return
+        }
+
+        // VAD indicates silence threshold reached; signal STT to finalize current phrase
+        speechRecognitionService.finalizeCurrentUtterance()
         store.setIsSpeaking(false)
       })
     })
@@ -100,6 +110,10 @@ export class VoiceCoordinator {
     // 3. STT Events
     const unsubSttInterim = speechRecognitionService.on(STT_EVENTS.INTERIM_RESULT, (data) => {
       this._updateStore((store) => {
+        // Self-Hearing Protection Gate: Discard interim transcripts while Mochi is speaking
+        if (store.isMochiSpeaking || store.voiceState === VOICE_STATES.MOCHI_SPEAKING || store.voiceState === VOICE_STATES.PROCESSING) {
+          return
+        }
         store.setInterimTranscript(data.text)
       })
     })
@@ -107,10 +121,15 @@ export class VoiceCoordinator {
 
     const unsubSttFinal = speechRecognitionService.on(STT_EVENTS.FINAL_RESULT, (data) => {
       this._updateStore((store) => {
+        // Self-Hearing Protection Gate: Discard final transcripts while Mochi is speaking
+        if (store.isMochiSpeaking || store.voiceState === VOICE_STATES.MOCHI_SPEAKING || store.voiceState === VOICE_STATES.PROCESSING) {
+          return
+        }
         store.setFinalTranscript(data.text)
       })
     })
     this.unsubscribers.push(unsubSttFinal)
+
 
     const unsubSttError = speechRecognitionService.on(STT_EVENTS.ERROR, (err) => {
       this._updateStore((store) => {

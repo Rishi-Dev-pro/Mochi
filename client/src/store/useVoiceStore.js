@@ -64,10 +64,21 @@ export const useVoiceStore = create((set, get) => ({
   setIsSpeaking: (isSpeaking) => set({ isSpeaking }),
 
   // Set TTS state
-  setTtsState: (ttsState) => set({
-    ttsState,
-    isMochiSpeaking: ttsState === TTS_STATES.SPEAKING
-  }),
+  setTtsState: (ttsState) => {
+    const isSpeaking = ttsState === TTS_STATES.SPEAKING
+    const isFinished = ttsState === TTS_STATES.COMPLETED || ttsState === TTS_STATES.IDLE
+    const currentVoiceMode = get().voiceMode
+
+    set((state) => ({
+      ttsState,
+      isMochiSpeaking: isSpeaking,
+      voiceState: isSpeaking
+        ? VOICE_STATES.MOCHI_SPEAKING
+        : (isFinished && currentVoiceMode && (state.voiceState === VOICE_STATES.MOCHI_SPEAKING || state.voiceState === VOICE_STATES.PROCESSING)
+            ? VOICE_STATES.LISTENING
+            : state.voiceState)
+    }))
+  },
 
   setIsMochiSpeaking: (isMochiSpeaking) => set({ isMochiSpeaking }),
 
@@ -80,10 +91,12 @@ export const useVoiceStore = create((set, get) => ({
 
   stopTts: () => {
     ttsService.stop()
+    const currentVoiceMode = get().voiceMode
     set({
       ttsState: TTS_STATES.IDLE,
       isMochiSpeaking: false,
-      outputAudioLevel: 0.0
+      outputAudioLevel: 0.0,
+      voiceState: currentVoiceMode ? VOICE_STATES.LISTENING : VOICE_STATES.IDLE
     })
   },
 
@@ -92,7 +105,7 @@ export const useVoiceStore = create((set, get) => ({
     set((state) => ({
       interimTranscript,
       voiceState: interimTranscript && state.voiceState === VOICE_STATES.LISTENING
-        ? VOICE_STATES.TRANSCRIBING
+        ? VOICE_STATES.USER_SPEAKING
         : state.voiceState
     }))
   },
@@ -111,17 +124,10 @@ export const useVoiceStore = create((set, get) => ({
     set((state) => ({
       finalTranscript: trimmed,
       interimTranscript: '',
-      transcriptHistory: [newEntry, ...state.transcriptHistory].slice(0, 50),
-      voiceState: VOICE_STATES.SPEECH_ENDED
+      transcriptHistory: [newEntry, ...state.transcriptHistory].slice(0, 50)
     }))
-
-    // Return to LISTENING state after short display delay
-    setTimeout(() => {
-      if (get().voiceMode && get().voiceState === VOICE_STATES.SPEECH_ENDED) {
-        set({ voiceState: VOICE_STATES.LISTENING })
-      }
-    }, 800)
   },
+
 
   // Clear all historic and current transcripts
   clearTranscripts: () => set({ interimTranscript: '', finalTranscript: '', transcriptHistory: [] }),
