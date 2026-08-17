@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useClaude } from '../hooks/useClaude'
 import { useEmotionAwareChat } from '../hooks/useEmotionAwareChat'
 import { formatEmotionSummary } from '../services/emotionAwareChatService'
+import VoiceController from './VoiceController'
 import './ChatInterface.css'
 
 export default function ChatInterface() {
@@ -29,6 +30,19 @@ export default function ChatInterface() {
       handleSend()
     }
   }
+
+  const handleTranscriptReceived = (transcript) => {
+    if (transcript && typeof transcript === 'string') {
+      const trimmed = transcript.trim()
+      if (trimmed) {
+        // Automatically dispatch hands-free voice transcript to AI conversation pipeline
+        voiceAiBridge.processUtterance(trimmed).catch((err) => {
+          console.error('[ChatInterface] Failed to process voice utterance:', err)
+        })
+      }
+    }
+  }
+
 
   const renderEmotion = (msg) => {
     if (!msg.emotion) return null
@@ -59,7 +73,7 @@ export default function ChatInterface() {
           <div className="empty-state">
             <p className="empty-icon">💬</p>
             <p>Start chatting with Mochi!</p>
-            <p className="empty-hint">Say hello to begin...</p>
+            <p className="empty-hint">Say hello or enable hands-free voice mode...</p>
           </div>
         ) : (
           messages.map((msg, idx) => {
@@ -90,10 +104,15 @@ export default function ChatInterface() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Hands-Free Voice Input & VAD Controller */}
+      <div style={{ padding: '0 20px' }}>
+        <VoiceController onTranscriptReceived={handleTranscriptReceived} />
+      </div>
+
       <div className="chat-input-area">
         <textarea
           className="chat-input"
-          placeholder="Type a message... (Shift+Enter for new line)"
+          placeholder="Type a message or use hands-free voice above... (Shift+Enter for new line)"
           onKeyDown={handleKeyDown}
           onChange={(e) => setInput(e.target.value)}
           value={input}
@@ -111,3 +130,4 @@ export default function ChatInterface() {
     </div>
   )
 }
+

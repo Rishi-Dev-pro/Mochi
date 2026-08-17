@@ -107,15 +107,71 @@ Respond naturally and briefly (1-2 sentences max).
   }
 }
 
-export function parseEmotionFromResponse(text) {
-  if (!text) return { type: 'neutral', intensity: 50, text: '' }
+const VALID_EMOTIONS = new Set([
+  'happy',
+  'angry',
+  'shouting',
+  'waving',
+  'teasing',
+  'sad',
+  'surprised',
+  'confused',
+  'sleepy',
+  'excited',
+  'curious',
+  'concerned',
+  'neutral'
+])
 
-  const emotionMatch = text.match(/<emotion type="([^"]+)" intensity="(\d+)"\/>/)
-  if (!emotionMatch) return { type: 'neutral', intensity: 50, text }
+export function parseEmotionFromResponse(rawText) {
+  if (!rawText || typeof rawText !== 'string') {
+    return { type: 'neutral', intensity: 50, text: '' }
+  }
+
+  // Regex handles:
+  // 1) <emotion type="happy" intensity="85"/>
+  // 2) <emotion type="happy" intensity="0.85">content</emotion>
+  // 3) <emotion type='happy' intensity='85'>
+  const emotionRegex = /<emotion\s+type=["']([a-zA-Z]+)["'](?:\s+intensity=["']([0-9.]+)["'])?\s*(?:\/>|>([\s\S]*?)<\/emotion>|>)/i
+  const match = rawText.match(emotionRegex)
+
+  let extractedType = 'neutral'
+  let extractedIntensity = 65
+
+  if (match) {
+    const rawType = match[1]?.toLowerCase()
+    if (VALID_EMOTIONS.has(rawType)) {
+      extractedType = rawType
+    } else if (rawType === 'calm' || rawType === 'peaceful') {
+      extractedType = 'neutral'
+    } else if (rawType === 'joy' || rawType === 'cheerful') {
+      extractedType = 'happy'
+    }
+
+    if (match[2] !== undefined) {
+      const parsedNum = parseFloat(match[2])
+      if (!isNaN(parsedNum)) {
+        // If intensity is represented as a decimal fraction (0.0 - 1.0), scale to 0 - 100
+        extractedIntensity = parsedNum <= 1.0 && parsedNum > 0 ? Math.round(parsedNum * 100) : Math.round(parsedNum)
+        extractedIntensity = Math.max(0, Math.min(100, extractedIntensity))
+      }
+    }
+  }
+
+  // Clean all emotion markup from the text
+  const cleanText = rawText
+    .replace(/<emotion[^>]*>[\s\S]*?<\/emotion>/gi, (m) => {
+      // Extract inner content if present
+      const inner = m.replace(/<\/?emotion[^>]*>/gi, '')
+      return inner
+    })
+    .replace(/<\/?emotion[^>]*\/?>/gi, '')
+    .trim()
 
   return {
-    type: emotionMatch[1],
-    intensity: parseInt(emotionMatch[2]),
-    text: text.replace(emotionMatch[0], '').trim(),
+    type: extractedType,
+    intensity: extractedIntensity,
+    text: cleanText || rawText.trim()
   }
 }
+

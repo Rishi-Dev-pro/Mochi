@@ -1,0 +1,234 @@
+/* ==========================================================================
+   Minecraft Cherry Grove Themed Voice Controller Styles
+   ========================================================================== */
+
+.voice-controller-panel {
+  background: rgba(45, 27, 45, 0.85);
+  border: 3px solid #ffb7c5;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.voice-controller-panel.active {
+  border-color: #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.25), inset 0 0 15px rgba(255, 183, 197, 0.15);
+}
+
+.voice-controller-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.voice-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.voice-title {
+  font-family: 'Minecraft', 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffb7c5;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-shadow: 2px 2px 0 #1e1022;
+}
+
+.voice-status-pill {
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  letter-spacing: 0.5px;
+}
+
+.voice-status-pill.idle {
+  color: #d1d5db;
+  border-color: rgba(209, 213, 219, 0.3);
+}
+
+.voice-status-pill.listening {
+  color: #7ee8fa;
+  border-color: #7ee8fa;
+  background: rgba(126, 232, 250, 0.15);
+  animation: pulseListening 2s infinite ease-in-out;
+}
+
+.voice-status-pill.speaking {
+  color: #ffd700;
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.2);
+  animation: pulseSpeaking 0.8s infinite alternate;
+}
+
+.voice-status-pill.transcribing {
+  color: #c084fc;
+  border-color: #c084fc;
+  background: rgba(192, 132, 252, 0.2);
+}
+
+.voice-status-pill.error,
+.voice-status-pill.denied {
+  color: #ff7675;
+  border-color: #ff7675;
+  background: rgba(255, 118, 117, 0.2);
+}
+
+@keyframes pulseListening {
+  0%, 100% { box-shadow: 0 0 5px rgba(126, 232, 250, 0.2); }
+  50% { box-shadow: 0 0 15px rgba(126, 232, 250, 0.5); }
+}
+
+@keyframes pulseSpeaking {
+  0% { transform: scale(0.98); box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); }
+  100% { transform: scale(1.02); box-shadow: 0 0 18px rgba(255, 215, 0, 0.7); }
+}
+
+/* Audio Visualizer Meter */
+.voice-visualizer-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(20, 10, 25, 0.6);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 183, 197, 0.2);
+  margin-bottom: 14px;
+}
+
+.visualizer-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 28px;
+  flex: 1;
+}
+
+.visualizer-bar {
+  flex: 1;
+  background: #ffb7c5;
+  border-radius: 2px;
+  min-height: 4px;
+  transition: height 0.08s ease-out, background-color 0.15s ease;
+}
+
+.visualizer-bar.active {
+  background: linear-gradient(180deg, #ffd700, #ff85a2);
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+}
+
+.vad-indicator-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'Minecraft', monospace;
+  white-space: nowrap;
+}
+
+.vad-indicator-badge.speaking {
+  background: #ffd700;
+  color: #2b112c;
+  font-weight: bold;
+}
+
+.vad-indicator-badge.quiet {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Transcript Live Display */
+.voice-transcript-box {
+  background: rgba(15, 8, 20, 0.75);
+  border: 2px dashed rgba(255, 183, 197, 0.35);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  min-height: 52px;
+  margin-bottom: 12px;
+}
+
+.transcript-interim {
+  color: #ffb7c5;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.transcript-final {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.transcript-placeholder {
+  color: rgba(255, 255, 255, 0.45);
+  font-style: italic;
+  font-size: 0.88rem;
+}
+
+.transcript-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-mini {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-mini:hover {
+  background: rgba(255, 183, 197, 0.3);
+  border-color: #ffb7c5;
+}
+
+/* Recent Transcripts List */
+.voice-history-summary {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.1);
+}
+
+.history-item-time {
+  font-size: 0.72rem;
+  color: #ffb7c5;
+  white-space: nowrap;
+}
+
+.history-item-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
