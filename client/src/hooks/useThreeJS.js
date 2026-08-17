@@ -4,8 +4,10 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { VRMLoaderPlugin } from '@pixiv/three-vrm'
 import { useEmotionStore } from '../store/emotionStore'
+import { lipSyncManager } from '../lipsync/lipSyncManager'
 
 export function useThreeJS(containerRef) {
+
   const sceneRef = useRef(null)
   const rendererRef = useRef(null)
   const vrmRef = useRef(null)
@@ -447,6 +449,9 @@ export function useThreeJS(containerRef) {
             break
         }
 
+        // Real-Time VRM Lip-Sync (Audio-driven mouth openness & vowel blendshapes)
+        lipSyncManager.update(delta, vrm)
+
         vrm.expressionManager.update()
         vrm.update(delta)
       }
@@ -475,6 +480,7 @@ export function useThreeJS(containerRef) {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('resize', handleResize)
       cancelAnimationFrame(animationId)
+      lipSyncManager.stop()
       renderer.dispose()
       if (container && domElement) {
         container.removeChild(domElement)
@@ -484,3 +490,4 @@ export function useThreeJS(containerRef) {
 
   return { sceneRef, rendererRef, vrmRef, controlsRef }
 }
+
