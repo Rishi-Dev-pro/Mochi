@@ -29,9 +29,9 @@ export function useThreeJS(containerRef) {
     const width = containerRef.current.clientWidth
     const height = containerRef.current.clientHeight
     
-    // Position camera to frame head & upper chest
+    // Camera framing: Centered with ample margin above top of head and raised hand by default
     const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 1000)
-    camera.position.set(0, 0.42, 1.85)
+    camera.position.set(0, 0.10, 2.50)
 
     // 2. RENDERER SETUP
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -43,14 +43,14 @@ export function useThreeJS(containerRef) {
     containerRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
-    // Orbit Controls
+    // Orbit Controls: Centered at lower chest height (0.10)
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.05
-    controls.target.set(0, 0.42, 0)
+    controls.target.set(0, 0.10, 0)
     controls.maxPolarAngle = Math.PI / 1.8
-    controls.minDistance = 1.0
-    controls.maxDistance = 4.0
+    controls.minDistance = 0.8
+    controls.maxDistance = 6.0
     controlsRef.current = controls
 
     // 3. STUDIO LIGHTING
@@ -72,7 +72,7 @@ export function useThreeJS(containerRef) {
     fillLight.position.set(2.5, 1, 2)
     scene.add(fillLight)
 
-    // 4. LOAD CUTE VRM ANIME GIRL AVATAR
+    // 4. LOAD CUTE VRM ANIME GIRL AVATAR (Default clothes & skin)
     const loader = new GLTFLoader()
     loader.register((parser) => new VRMLoaderPlugin(parser))
 
@@ -84,12 +84,13 @@ export function useThreeJS(containerRef) {
         const vrm = gltf.userData.vrm
         if (!vrm) return
 
-        // Position avatar so face is centered at camera height
-        vrm.scene.position.set(0, -0.85, 0)
-        vrm.scene.scale.set(1.35, 1.35, 1.35)
+        // Position & scale avatar so raised waving hand has ample top margin
+        const BASE_Y = -0.88
+        vrm.scene.position.set(0, BASE_Y, 0)
+        vrm.scene.scale.set(0.92, 0.92, 0.92)
         vrm.scene.rotation.y = 0 // FACE FORWARD DIRECTLY AT USER!
 
-        // Enable shadows
+        // Enable shadows on original default meshes
         vrm.scene.traverse((obj) => {
           if (obj.isMesh) {
             obj.castShadow = true
@@ -242,25 +243,89 @@ export function useThreeJS(containerRef) {
           headNode.rotation.x = -mouse.y
         }
 
-        // Lower arms down naturally at sides (negative Z for left, positive Z for right)
+        // Smooth Arm Motion & Human Waving Logic
         const leftUpperArm = vrm.humanoid.getNormalizedBoneNode('leftUpperArm')
         const rightUpperArm = vrm.humanoid.getNormalizedBoneNode('rightUpperArm')
         const leftLowerArm = vrm.humanoid.getNormalizedBoneNode('leftLowerArm')
         const rightLowerArm = vrm.humanoid.getNormalizedBoneNode('rightLowerArm')
+        const rightHand = vrm.humanoid.getNormalizedBoneNode('rightHand')
+
+        const lerp = THREE.MathUtils.lerp
 
         if (activeEmotion === 'waving') {
-          if (leftUpperArm) leftUpperArm.rotation.z = -1.2
-          if (leftLowerArm) leftLowerArm.rotation.z = -0.1
-          if (rightUpperArm) {
-            rightUpperArm.rotation.z = 0.4 + Math.sin(elapsedTime * 6) * 0.35
-            rightUpperArm.rotation.x = -0.5
+          // =============================================
+          // LEFT ARM: Stays relaxed at side
+          // =============================================
+          if (leftUpperArm) {
+            leftUpperArm.rotation.x = lerp(leftUpperArm.rotation.x, 0, 0.1)
+            leftUpperArm.rotation.y = lerp(leftUpperArm.rotation.y, 0, 0.1)
+            leftUpperArm.rotation.z = lerp(leftUpperArm.rotation.z, -1.25, 0.1)
           }
-          if (rightLowerArm) rightLowerArm.rotation.y = 0.5
+          if (leftLowerArm) {
+            leftLowerArm.rotation.y = lerp(leftLowerArm.rotation.y, 0, 0.1)
+            leftLowerArm.rotation.z = lerp(leftLowerArm.rotation.z, -0.15, 0.1)
+          }
+
+          // =============================================
+          // RIGHT ARM: Waving animation (MATCHING DEMO PICTURE)
+          // =============================================
+          
+          // Wave timing: 0.6 seconds per cycle
+          const cycleDuration = 0.6
+          const cyclePhase = (elapsedTime % cycleDuration) / cycleDuration
+          const waveAngle = cyclePhase * Math.PI * 2
+          
+          // Smooth side-to-side hand sway (waving at top)
+          const handSway = Math.sin(waveAngle) * 0.28
+
+          // --------- RIGHT UPPER ARM (Shoulder) ---------
+          // Upper arm angled OUTWARD to the right side at ~45° (matching demo picture)
+          if (rightUpperArm) {
+            rightUpperArm.rotation.x = lerp(rightUpperArm.rotation.x, 0.10, 0.12)
+            rightUpperArm.rotation.y = lerp(rightUpperArm.rotation.y, 0.0, 0.12)
+            rightUpperArm.rotation.z = lerp(rightUpperArm.rotation.z, -0.45, 0.12) // Outward to the right at 45°
+          }
+
+          // --------- RIGHT LOWER ARM (Elbow) ---------
+          // Elbow bent UPWARDS towards the sky (negative Z flex in VRM)
+          if (rightLowerArm) {
+            rightLowerArm.rotation.x = lerp(rightLowerArm.rotation.x, 0, 0.12)
+            rightLowerArm.rotation.y = lerp(rightLowerArm.rotation.y, 0, 0.12)
+            rightLowerArm.rotation.z = lerp(rightLowerArm.rotation.z, -1.40 + handSway * 0.3, 0.15) // BENT UPWARDS TOWARDS SKY!
+          }
+
+          // --------- RIGHT HAND (Wrist) ---------
+          // Open palm facing forward, waving side-to-side beside head
+          if (rightHand) {
+            rightHand.rotation.x = lerp(rightHand.rotation.x, 0.10, 0.15)
+            rightHand.rotation.y = lerp(rightHand.rotation.y, 0, 0.15)
+            rightHand.rotation.z = lerp(rightHand.rotation.z, handSway * 0.6, 0.20)
+            rightHand.position.z = lerp(rightHand.position.z, 0, 0.15)
+          }
         } else {
-          if (leftUpperArm) leftUpperArm.rotation.z = -1.2
-          if (rightUpperArm) rightUpperArm.rotation.z = 1.2
-          if (leftLowerArm) leftLowerArm.rotation.z = -0.15
-          if (rightLowerArm) rightLowerArm.rotation.z = 0.15
+          // Natural resting pose at sides
+          if (leftUpperArm) {
+            leftUpperArm.rotation.x = lerp(leftUpperArm.rotation.x, 0, 0.1)
+            leftUpperArm.rotation.y = lerp(leftUpperArm.rotation.y, 0, 0.1)
+            leftUpperArm.rotation.z = lerp(leftUpperArm.rotation.z, -1.25, 0.1)
+          }
+          if (leftLowerArm) {
+            leftLowerArm.rotation.y = lerp(leftLowerArm.rotation.y, 0, 0.1)
+            leftLowerArm.rotation.z = lerp(leftLowerArm.rotation.z, -0.15, 0.1)
+          }
+          if (rightUpperArm) {
+            rightUpperArm.rotation.x = lerp(rightUpperArm.rotation.x, 0, 0.1)
+            rightUpperArm.rotation.y = lerp(rightUpperArm.rotation.y, 0, 0.1)
+            rightUpperArm.rotation.z = lerp(rightUpperArm.rotation.z, 1.25, 0.1)
+          }
+          if (rightLowerArm) {
+            rightLowerArm.rotation.y = lerp(rightLowerArm.rotation.y, 0, 0.1)
+            rightLowerArm.rotation.z = lerp(rightLowerArm.rotation.z, 0.15, 0.1)
+          }
+          if (rightHand) {
+            rightHand.rotation.z = lerp(rightHand.rotation.z, 0, 0.1)
+            rightHand.position.z = lerp(rightHand.position.z, 0, 0.1)
+          }
         }
       }
 
@@ -276,20 +341,22 @@ export function useThreeJS(containerRef) {
         resetVRMExpressions(vrm)
 
         // Natural Eye Blink Cycle
-        const isBlinking = (elapsedTime - lastBlink > 3.5) && (elapsedTime - lastBlink < 3.7)
+        const isBlinking = elapsedTime - lastBlink > 3.5 && elapsedTime - lastBlink < 3.7
         if (elapsedTime - lastBlink > 3.7) lastBlink = elapsedTime
+
+        const BASE_Y = -0.88
 
         switch (activeEmotion) {
           case 'happy':
           case 'excited':
             vrm.expressionManager.setValue('happy', 1.0)
-            if (vrm.scene) vrm.scene.position.y = -0.85 + Math.sin(elapsedTime * 4) * 0.03
+            if (vrm.scene) vrm.scene.position.y = BASE_Y + Math.sin(elapsedTime * 4) * 0.03
             break
 
           case 'waving':
             vrm.expressionManager.setValue('happy', 1.0)
             if (vrm.scene) {
-              vrm.scene.position.y = -0.85 + Math.sin(elapsedTime * 3) * 0.02
+              vrm.scene.position.y = BASE_Y + Math.sin(elapsedTime * 3) * 0.02
               vrm.scene.rotation.y = Math.sin(elapsedTime * 4) * 0.04
             }
             break
@@ -300,7 +367,7 @@ export function useThreeJS(containerRef) {
             vrm.expressionManager.setValue('oh', 0.3)
             if (vrm.scene) {
               vrm.scene.rotation.y = Math.sin(elapsedTime * 3) * 0.05
-              vrm.scene.position.y = -0.85 + Math.sin(elapsedTime * 4) * 0.02
+              vrm.scene.position.y = BASE_Y + Math.sin(elapsedTime * 4) * 0.02
             }
             break
 
@@ -314,7 +381,7 @@ export function useThreeJS(containerRef) {
                 w.scale.set(s, s, s)
               })
             }
-            if (vrm.scene) vrm.scene.position.y = -0.85 + Math.sin(elapsedTime * 15) * 0.02
+            if (vrm.scene) vrm.scene.position.y = BASE_Y + Math.sin(elapsedTime * 15) * 0.02
             break
 
           case 'angry':
@@ -323,7 +390,7 @@ export function useThreeJS(containerRef) {
               angryEmberGroupRef.current.visible = true
               angryEmberGroupRef.current.rotation.y = elapsedTime * 4
             }
-            if (vrm.scene) vrm.scene.position.y = -0.85 + Math.sin(elapsedTime * 8) * 0.02
+            if (vrm.scene) vrm.scene.position.y = BASE_Y + Math.sin(elapsedTime * 8) * 0.02
             break
 
           case 'sad':
@@ -334,7 +401,7 @@ export function useThreeJS(containerRef) {
                 t.position.y = 0.52 - ((elapsedTime * 1.5 + i * 0.4) % 0.3)
               })
             }
-            if (vrm.scene) vrm.scene.position.y = -0.88 + Math.sin(elapsedTime * 1.5) * 0.015
+            if (vrm.scene) vrm.scene.position.y = BASE_Y - 0.02 + Math.sin(elapsedTime * 1.5) * 0.015
             break
 
           case 'surprised':
@@ -343,7 +410,7 @@ export function useThreeJS(containerRef) {
               surpriseGroupRef.current.visible = true
               surpriseGroupRef.current.rotation.y = elapsedTime * 2
             }
-            if (vrm.scene) vrm.scene.position.y = -0.82 + Math.sin(elapsedTime * 6) * 0.02
+            if (vrm.scene) vrm.scene.position.y = BASE_Y + 0.02 + Math.sin(elapsedTime * 6) * 0.02
             break
 
           case 'confused':
@@ -365,7 +432,7 @@ export function useThreeJS(containerRef) {
                 z.position.y = 0.62 + i * 0.08 + Math.sin(elapsedTime * 2 + i) * 0.02
               })
             }
-            if (vrm.scene) vrm.scene.position.y = -0.87 + Math.sin(elapsedTime * 1.2) * 0.02
+            if (vrm.scene) vrm.scene.position.y = BASE_Y - 0.02 + Math.sin(elapsedTime * 1.2) * 0.02
             break
 
           default: // Neutral
@@ -374,7 +441,7 @@ export function useThreeJS(containerRef) {
             }
             vrm.expressionManager.setValue('neutral', 1.0)
             if (vrm.scene) {
-              vrm.scene.position.y = -0.85 + Math.sin(elapsedTime * 2) * 0.02
+              vrm.scene.position.y = BASE_Y + Math.sin(elapsedTime * 2) * 0.02
               vrm.scene.rotation.y = 0
             }
             break
@@ -417,8 +484,3 @@ export function useThreeJS(containerRef) {
 
   return { sceneRef, rendererRef, vrmRef, controlsRef }
 }
-
-
-
-
-
