@@ -1,0 +1,87 @@
+.webcam-control-panel {
+  background: rgba(36, 26, 48, 0.7);
+  backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 183, 197, 0.25);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.webcam-control-panel.is-active {
+  border-color: rgba(126, 232, 250, 0.6);
+  background: rgba(36, 26, 48, 0.85);
+  box-shadow: 0 0 20px rgba(126, 232, 250, 0.18);
+}
+
+.webcam-control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.webcam-control-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.webcam-icon {
+  font-size: 1.4rem;
+}
+
+.webcam-label {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #ffffff;
+}
+
+.webcam-status-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.status-active {
+  background: rgba(46, 213, 115, 0.25);
+  border: 1px solid #2ed573;
+  color: #2ed573;
+}
+
+.status-requesting {
+  background: rgba(255, 215, 0, 0.25);
+  border: 1px solid #ffd700;
+  color: #ffd700;
+}
+
+.status-denied,
+.status-error {
+  background: rgba(255, 118, 117, 0.25);
+  border: 1px solid #ff7675;
+  color: #ff7675;
+}
+
+.status-idle {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.webcam-control-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.webcam-control-desc {
+  margin: 10px 0 0 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+}

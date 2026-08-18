@@ -1,6 +1,7 @@
 import { useWebcam } from '../context/WebcamContext'
 import { useVoiceStore } from '../store/useVoiceStore'
 import WebcamFeed from '../components/WebcamFeed'
+import WebcamControl from '../components/WebcamControl'
 import VoiceController from '../components/VoiceController'
 import '../styles/minecraft-theme.css'
 import '../styles/minecraft-blocks.css'
@@ -8,7 +9,7 @@ import '../styles/minecraft-buttons.css'
 import '../styles/minecraft-effects.css'
 
 export default function SettingsPage() {
-  const { isEnabled, enableWebcam, disableWebcam } = useWebcam()
+  const { isEnabled } = useWebcam()
   const { config, updateConfig } = useVoiceStore()
 
   const handleSpeechThresholdChange = (e) => {
@@ -96,17 +97,7 @@ export default function SettingsPage() {
             🎥 Webcam & Motion Detection
           </h2>
           
-          <div style={{ marginBottom: '20px' }}>
-            {!isEnabled ? (
-              <button onClick={enableWebcam} className="btn-primary btn-lg">
-                🎥 Enable Webcam Detection
-              </button>
-            ) : (
-              <button onClick={disableWebcam} className="btn-danger btn-lg">
-                🚫 Disable Webcam Detection
-              </button>
-            )}
-          </div>
+          <WebcamControl showDetails={false} />
 
           {isEnabled && (
             <div style={{ marginTop: '20px', borderRadius: '12px', overflow: 'hidden', border: '2px solid rgba(255, 183, 197, 0.3)' }}>

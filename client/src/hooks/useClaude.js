@@ -1,26 +1,21 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { sendChatMessage, parseEmotionFromResponse } from '../services/llmService'
 import { useEmotionStore } from '../store/emotionStore'
+import { useConversationStore } from '../store/useConversationStore'
 import { buildEmotionContext } from '../services/emotionAwareChatService'
 import { addEmotionToHistory } from '../services/emotionHistoryService'
 import { uploadEmotionToCloud } from '../services/emotionCloudService'
 import { voiceAiBridge } from '../voice/voiceAiBridge'
 import { ttsService } from '../voice/ttsService'
 
-const INITIAL_MOCHI_MESSAGE = {
-
-  id: 'welcome-msg',
-  role: 'assistant',
-  content: 'Hello! I am Mochi, your companion. How are you feeling today?',
-  emotion: 'happy',
-  intensity: 0.9,
-  timestamp: new Date().toISOString(),
-}
-
 export function useClaude() {
-  const [messages, setMessages] = useState([INITIAL_MOCHI_MESSAGE])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const messages = useConversationStore((state) => state.messages)
+  const loading = useConversationStore((state) => state.loading)
+  const error = useConversationStore((state) => state.error)
+  const setMessages = useConversationStore((state) => state.setMessages)
+  const setLoading = useConversationStore((state) => state.setLoading)
+  const setError = useConversationStore((state) => state.setError)
+  const clearMessages = useConversationStore((state) => state.clearMessages)
 
   const sendMessage = useCallback(async (userInput) => {
     const trimmedInput = userInput?.trim()
@@ -109,17 +104,6 @@ export function useClaude() {
       voiceAiBridge.unregisterSendHandler()
     }
   }, [sendMessage])
-
-  const clearMessages = useCallback(() => {
-    setMessages([
-      {
-        ...INITIAL_MOCHI_MESSAGE,
-        id: `welcome-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-      },
-    ])
-    setError(null)
-  }, [])
 
   return {
     messages,

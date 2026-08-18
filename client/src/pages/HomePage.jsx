@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useEmotionStore } from '../store/useEmotionStore'
 import MochiCharacter from '../components/MochiCharacter'
+import ChatInterface from '../components/ChatInterface'
+import WebcamControl from '../components/WebcamControl'
 import { useGestureDetection } from '../hooks/useGestureDetection'
 import '../styles/minecraft-theme.css'
 import '../styles/minecraft-blocks.css'
@@ -12,7 +14,6 @@ export default function HomePage() {
   const navigate = useNavigate()
   const emotionStore = useEmotionStore()
   const { lastGesture } = useGestureDetection()
-  const [showPose, setShowPose] = useState(false)
   const [mochiReaction, setMochiReaction] = useState(null)
 
   useEffect(() => {
@@ -90,28 +91,27 @@ export default function HomePage() {
   return (
     <div className="minecraft-sky" style={{ paddingBottom: '70px' }}>
       
-      {/* Main 3D Container */}
+      {/* Main Container */}
       <div style={{ maxWidth: '980px', margin: '0 auto', padding: '36px 20px 0 20px' }}>
         
         {/* Header 3D Grass Block Card */}
-        <header className="mc-3d-block grass-block block-appear" style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+        <header className="mc-3d-block grass-block block-appear" style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span className="xp-orb" />
             <span className="pixel-font" style={{ fontSize: '0.85rem', color: 'var(--mc-sakura-light)' }}>
               LEVEL 99 CHERRY GROVE COMPANION
             </span>
             <span className="xp-orb" />
           </div>
-          <h1>🌾 MOCHI AI 🌾</h1>
-          <p style={{ maxWidth: '580px', margin: '8px auto 0 auto', color: 'rgba(255, 255, 255, 0.9)', fontSize: '1.1rem' }}>
-            Your cute 3D Minecraft emotional companion. Expressing feelings & gestures in real-time.
+          <h1 style={{ margin: '4px 0' }}>🌾 MOCHI AI 🌾</h1>
+          <p style={{ maxWidth: '620px', margin: '6px auto 0 auto', color: 'rgba(255, 255, 255, 0.9)', fontSize: '1.05rem' }}>
+            Your 3D emotional AI companion with real-time hands-free voice, lip-sync, and gesture sensing.
           </p>
         </header>
 
-        {/* 3D Mochi Viewport Shrine */}
-        <section className="mc-3d-block stone-block block-appear" style={{ marginBottom: '32px', textAlign: 'center' }}>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        {/* 1. 3D Mochi Viewport Shrine */}
+        <section className="mc-3d-block stone-block block-appear" style={{ marginBottom: '28px', textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <h2 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span>🔮</span> 3D Mochi Character Shrine
             </h2>
@@ -123,7 +123,7 @@ export default function HomePage() {
               fontSize: '0.78rem',
               color: '#ffffff'
             }}>
-              3D CANVAS
+              3D VRM AVATAR
             </div>
           </div>
 
@@ -138,7 +138,7 @@ export default function HomePage() {
 
           <div style={{
             width: '100%',
-            minHeight: '400px',
+            minHeight: '440px',
             borderRadius: '16px',
             overflow: 'hidden',
             background: 'radial-gradient(circle at 50% 50%, rgba(36, 26, 48, 0.6) 0%, rgba(12, 8, 18, 0.8) 100%)',
@@ -149,9 +149,30 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Emotion Status 3D Block Card */}
-        <section className={`mc-3d-block ${currentTheme.cardClass} block-appear`} style={{ marginBottom: '32px' }}>
-          
+        {/* 2. Unified Voice & Chat Interface Panel */}
+        <section className="mc-3d-block wood-block block-appear" style={{ marginBottom: '28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+            <h2 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span>📖</span> Companion Conversation & Voice HUD
+            </h2>
+            <div className="pixel-font" style={{
+              background: 'rgba(255, 183, 197, 0.2)',
+              border: '1px solid var(--mc-sakura-light)',
+              padding: '4px 12px',
+              borderRadius: '8px',
+              fontSize: '0.78rem',
+              color: '#ffffff'
+            }}>
+              HANDS-FREE FULL-DUPLEX
+            </div>
+          </div>
+
+          {/* Interactive Chat & Hands-Free Voice Controller */}
+          <ChatInterface />
+        </section>
+
+        {/* 3. Emotion Status 3D Block Card */}
+        <section className={`mc-3d-block ${currentTheme.cardClass} block-appear`} style={{ marginBottom: '28px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '22px', flexWrap: 'wrap' }}>
             
             {/* 3D Emoji Avatar Block */}
@@ -217,7 +238,24 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* 3D Hotbar Item Grid Navigation */}
+        {/* 4. Shared Webcam Control Section */}
+        <section className="mc-3d-block dirt-block block-appear" style={{ marginBottom: '28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📷</span> Webcam & Gesture Sensing
+            </h3>
+            <button
+              className="btn-mini"
+              onClick={() => navigate('/settings')}
+              title="Open full camera and skeleton view in Settings"
+            >
+              ⚙️ Full View in Settings
+            </button>
+          </div>
+          <WebcamControl showDetails={true} />
+        </section>
+
+        {/* 5. Inventory Hotbar Navigation */}
         <section style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
             <span style={{ fontSize: '1.6rem' }}>🎒</span>
@@ -225,13 +263,12 @@ export default function HomePage() {
           </div>
 
           <div className="blocks-grid">
-            
-            {/* Chat Card */}
+            {/* Chat Page Card */}
             <div className="mc-3d-block block-item wood-block" onClick={() => navigate('/chat')}>
               <div className="item-icon">📖</div>
               <h3 style={{ fontSize: '1.3rem', margin: '4px 0 2px 0' }}>Chat Log</h3>
               <p style={{ fontSize: '0.88rem', margin: 0, opacity: 0.85, textAlign: 'center' }}>
-                Talk with Mochi in real-time
+                Dedicated conversation view
               </p>
             </div>
 
@@ -252,22 +289,7 @@ export default function HomePage() {
                 Explore emotional logs
               </p>
             </div>
-
           </div>
-        </section>
-
-        {/* Pose Skeleton Tracking Block */}
-        <section className="mc-3d-block grass-block" style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '1.3rem' }}>📷 Pose Skeleton Tracker</h3>
-          <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.98rem', marginBottom: '18px' }}>
-            View and manage webcam motion detection & pose skeleton tracking in Settings.
-          </p>
-          <button 
-            className="btn-primary btn-lg"
-            onClick={() => navigate('/settings')}
-          >
-            ⚙️ Open Pose Tracker in Settings
-          </button>
         </section>
 
         {/* Footer */}
