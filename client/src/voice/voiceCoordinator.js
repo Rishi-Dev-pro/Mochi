@@ -184,6 +184,15 @@ export class VoiceCoordinator {
   }
 
   /**
+   * Ensure voice recognition is actively listening for subsequent turns
+   */
+  ensureListening() {
+    if (this.isActive) {
+      speechRecognitionService.ensureListening()
+    }
+  }
+
+  /**
    * Stop the complete hands-free voice capture pipeline and release all resources
    */
   stop() {

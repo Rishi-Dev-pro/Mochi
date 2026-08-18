@@ -64,10 +64,10 @@ export class VoiceAiBridge {
       return true
     }
 
-    // Check recent duplicate text within a 3-second window
+    // Check rapid duplicate event burst within a 1.2-second window
     if (
       trimmed.toLowerCase() === this.lastProcessedText.toLowerCase() &&
-      now - this.lastProcessedTimestamp < 3000
+      now - this.lastProcessedTimestamp < 1200
     ) {
       return true
     }

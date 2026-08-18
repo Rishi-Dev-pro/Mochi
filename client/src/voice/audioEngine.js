@@ -199,7 +199,7 @@ export class AudioEngine {
   /**
    * Continuous analysis loop reading ACTUAL float samples from AnalyserNode
    */
-  _analysisLoop = () => {
+  _analysisLoop() {
     if (!this.isPlaying) return
 
     let rawRms = 0.0
@@ -231,7 +231,7 @@ export class AudioEngine {
     this.emit(AUDIO_ENGINE_EVENTS.AMPLITUDE, normalizedAmplitude)
 
     this.animationFrameId = typeof requestAnimationFrame !== 'undefined'
-      ? requestAnimationFrame(this._analysisLoop)
+      ? requestAnimationFrame(() => this._analysisLoop())
       : null
   }
 

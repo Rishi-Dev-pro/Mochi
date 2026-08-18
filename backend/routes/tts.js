@@ -18,20 +18,22 @@ export async function handleTtsRequest(req, res) {
       return res.status(400).json({ error: 'Text cannot be empty or whitespace only' })
     }
 
-    // Limit maximum sentence length per request to 3000 chars for safety
     if (trimmed.length > 3000) {
       return res.status(400).json({ error: 'Text exceeds maximum limit of 3000 characters' })
     }
 
-    const wavBuffer = await generateSpeechAudio(trimmed)
+    const audioBuffer = await generateSpeechAudio(trimmed)
+
+    const isWav = audioBuffer.length >= 4 && audioBuffer.subarray(0, 4).toString('ascii') === 'RIFF'
+    const contentType = isWav ? 'audio/wav' : 'audio/mpeg'
 
     res.set({
-      'Content-Type': 'audio/wav',
-      'Content-Length': wavBuffer.length,
+      'Content-Type': contentType,
+      'Content-Length': audioBuffer.length,
       'Cache-Control': 'no-cache'
     })
 
-    return res.send(wavBuffer)
+    return res.send(audioBuffer)
   } catch (err) {
     console.error('[TTS Handler] Error generating speech:', err)
     return res.status(500).json({ error: err.message || 'TTS synthesis failed' })

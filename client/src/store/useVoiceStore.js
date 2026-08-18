@@ -69,9 +69,15 @@ export const useVoiceStore = create((set, get) => ({
     const isFinished = ttsState === TTS_STATES.COMPLETED || ttsState === TTS_STATES.IDLE
     const currentVoiceMode = get().voiceMode
 
+    if (isFinished && currentVoiceMode) {
+      voiceCoordinator.ensureListening()
+    }
+
     set((state) => ({
       ttsState,
       isMochiSpeaking: isSpeaking,
+      finalTranscript: isFinished && currentVoiceMode ? '' : state.finalTranscript,
+      interimTranscript: isFinished && currentVoiceMode ? '' : state.interimTranscript,
       voiceState: isSpeaking
         ? VOICE_STATES.MOCHI_SPEAKING
         : (isFinished && currentVoiceMode && (state.voiceState === VOICE_STATES.MOCHI_SPEAKING || state.voiceState === VOICE_STATES.PROCESSING)
@@ -92,10 +98,15 @@ export const useVoiceStore = create((set, get) => ({
   stopTts: () => {
     ttsService.stop()
     const currentVoiceMode = get().voiceMode
+    if (currentVoiceMode) {
+      voiceCoordinator.ensureListening()
+    }
     set({
       ttsState: TTS_STATES.IDLE,
       isMochiSpeaking: false,
       outputAudioLevel: 0.0,
+      finalTranscript: '',
+      interimTranscript: '',
       voiceState: currentVoiceMode ? VOICE_STATES.LISTENING : VOICE_STATES.IDLE
     })
   },

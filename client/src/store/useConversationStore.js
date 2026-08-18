@@ -16,7 +16,7 @@ export const INITIAL_MOCHI_MESSAGE = {
   timestamp: new Date().toISOString(),
 }
 
-export const useConversationStore = create((set, get) => ({
+export const useConversationStore = create((set) => ({
   messages: [INITIAL_MOCHI_MESSAGE],
   loading: false,
   error: null,

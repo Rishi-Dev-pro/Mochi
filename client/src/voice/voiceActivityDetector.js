@@ -123,7 +123,7 @@ export class VoiceActivityDetector {
     }
   }
 
-  _loop = () => {
+  _loop() {
     if (!this.isAnalyzing || !this.analyserNode) return
 
     const timeData = new Uint8Array(this.analyserNode.fftSize)
@@ -150,7 +150,7 @@ export class VoiceActivityDetector {
     if (this.calibrationCount < this.config.calibrationSamples) {
       this.noiseFloor = (this.noiseFloor * this.calibrationCount + rms) / (this.calibrationCount + 1)
       this.calibrationCount++
-      this.animationFrameId = requestAnimationFrame(this._loop)
+      this.animationFrameId = requestAnimationFrame(() => this._loop())
       return
     }
 

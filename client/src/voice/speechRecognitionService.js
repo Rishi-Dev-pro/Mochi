@@ -2,7 +2,7 @@
  * Speech Recognition Service (STT)
  *
  * Wrapper around Web Speech API (webkitSpeechRecognition / SpeechRecognition)
- * with robust session resilience, interim transcript streaming, and seamless hands-free operation.
+ * with continuous session resilience, interim transcript streaming, and seamless hands-free multi-turn operation.
  */
 
 import { STT_CONFIG } from './config'
@@ -40,7 +40,6 @@ export class SpeechRecognitionService {
     if (typeof window === 'undefined') return false
     return !!(window.SpeechRecognition || window.webkitSpeechRecognition)
   }
-
 
   /**
    * Register event callbacks
@@ -86,6 +85,21 @@ export class SpeechRecognitionService {
     this._startInstance()
   }
 
+  /**
+   * Ensure speech recognition is actively listening for the next turn
+   */
+  ensureListening() {
+    if (!this.shouldBeListening) return
+    this.consecutiveErrors = 0
+    if (!this.isListening || !this.recognition) {
+      if (this.restartTimeoutId) {
+        clearTimeout(this.restartTimeoutId)
+        this.restartTimeoutId = null
+      }
+      this._startInstance()
+    }
+  }
+
   _startInstance() {
     if (this.recognition) {
       this._destroyInstance()
@@ -94,9 +108,9 @@ export class SpeechRecognitionService {
     try {
       const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition
       this.recognition = new SpeechRecognitionClass()
-      this.recognition.continuous = this.config.continuous
-      this.recognition.interimResults = this.config.interimResults
-      this.recognition.lang = this.config.lang
+      this.recognition.continuous = this.config.continuous !== undefined ? this.config.continuous : true
+      this.recognition.interimResults = this.config.interimResults !== undefined ? this.config.interimResults : true
+      this.recognition.lang = this.config.lang || 'en-US'
 
       this.recognition.onstart = () => {
         this.isListening = true
@@ -105,6 +119,7 @@ export class SpeechRecognitionService {
       }
 
       this.recognition.onresult = (event) => {
+        this.consecutiveErrors = 0
         let interim = ''
         let newlyFinalized = ''
 
@@ -133,7 +148,7 @@ export class SpeechRecognitionService {
             timestamp: Date.now()
           })
 
-          // Reset interim & accumulated final after delivering
+          // Reset buffers after emitting final result
           this.currentInterimText = ''
           this.accumulatedFinalText = ''
         } else if (interim) {
@@ -145,22 +160,22 @@ export class SpeechRecognitionService {
       }
 
       this.recognition.onerror = (event) => {
-        // 'no-speech' is a normal occurrence in continuous listening; do not count as fatal error
-        if (event.error === 'no-speech') {
+        // Normal lifecycle occurrences in continuous mode (not fatal errors)
+        if (event.error === 'no-speech' || event.error === 'aborted') {
           return
         }
 
-        console.warn('[STT] Speech recognition warning/error:', event.error)
+        console.warn('[STT] Speech recognition notice:', event.error)
         this.consecutiveErrors++
 
         this.emit(STT_EVENTS.ERROR, {
           error: event.error,
-          message: event.message || `Speech recognition error: ${event.error}`
+          message: event.message || `Speech recognition notice: ${event.error}`
         })
 
-        if (this.consecutiveErrors >= this.config.maxConsecutiveErrors) {
-          console.error('[STT] Max consecutive recognition errors reached. Halting auto-restart.')
-          this.shouldBeListening = false
+        if (this.consecutiveErrors >= (this.config.maxConsecutiveErrors || 10)) {
+          console.warn('[STT] Consecutive recognition errors reached threshold. Refreshing instance...')
+          this.consecutiveErrors = 0
         }
       }
 
@@ -168,22 +183,29 @@ export class SpeechRecognitionService {
         this.isListening = false
         this.emit(STT_EVENTS.END)
 
-        // If recognition closed but voice mode is still desired, auto-restart cleanly
-        if (this.shouldBeListening && this.consecutiveErrors < this.config.maxConsecutiveErrors) {
+        // Automatically resume recognition in continuous hands-free mode
+        if (this.shouldBeListening) {
           if (this.restartTimeoutId) clearTimeout(this.restartTimeoutId)
           this.restartTimeoutId = setTimeout(() => {
-            if (this.shouldBeListening) {
+            if (this.shouldBeListening && (!this.isListening || !this.recognition)) {
               this._startInstance()
             }
-          }, this.config.restartDelayMs)
+          }, this.config.restartDelayMs || 250)
         }
       }
 
       this.recognition.start()
     } catch (err) {
-      console.error('[STT] Failed to start SpeechRecognition:', err)
+      console.warn('[STT] Recognition start notice:', err.message)
       this.isListening = false
-      this.emit(STT_EVENTS.ERROR, { error: 'start_failed', message: err.message })
+      if (this.shouldBeListening) {
+        if (this.restartTimeoutId) clearTimeout(this.restartTimeoutId)
+        this.restartTimeoutId = setTimeout(() => {
+          if (this.shouldBeListening) {
+            this._startInstance()
+          }
+        }, 500)
+      }
     }
   }
 
@@ -220,7 +242,7 @@ export class SpeechRecognitionService {
         this.recognition.onend = null
         this.recognition.stop()
       } catch (err) {
-        // Ignore stop error on unmount/cleanup
+        // Ignore stop error during destroy
       }
       this.recognition = null
     }
